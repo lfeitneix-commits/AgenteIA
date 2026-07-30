@@ -95,6 +95,35 @@
     flex-direction: column;
     gap: 16px;
   }
+  .model-status {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .model-status.error { border-color: var(--red); }
+  .model-status-text {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .model-status.error .model-status-text { color: var(--red); }
+  .model-progress-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .model-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--red);
+    transition: width .2s ease;
+  }
   .empty-state {
     margin: auto;
     text-align: center;
@@ -251,9 +280,13 @@
 </header>
 
 <main id="chat-main">
+  <div class="model-status" id="model-status">
+    <div class="model-status-text" id="model-status-text">Preparando el modelo de IA (se descarga una sola vez, después queda cacheado en el navegador)…</div>
+    <div class="model-progress-track"><div class="model-progress-bar" id="model-progress-bar"></div></div>
+  </div>
   <div class="empty-state" id="empty-state">
     <h2>Preguntame sobre los gastos de Neix</h2>
-    <p>Consulto en vivo las hojas "Gastos MM,26" y las hojas de resultados/rentabilidad por área del archivo "Resultados por área 2026". Solo respondo con datos que puedo verificar.</p>
+    <p>Consulto en vivo las hojas "Gastos MM,26" y las hojas de resultados/rentabilidad por área del archivo "Resultados por área 2026". Solo respondo con datos que puedo verificar. Corre 100% en tu navegador — no hay ningún servidor ni API de por medio.</p>
     <div class="examples">
       <span data-example="¿Cuánto le pagamos a Tanoira en mayo?">¿Cuánto le pagamos a Tanoira en mayo?</span>
       <span data-example="¿Cuál es la facturación por área en abril?">¿Cuál es la facturación por área en abril?</span>
@@ -333,10 +366,15 @@
         matrizGastos: '44234235',
       },
     },
-    apiEndpoint: '/api/chat',
-    // Google Gemini (gratis vía Google AI Studio, sin tarjeta) en vez de Claude.
-    model: 'gemini-2.5-flash',
   };
+
+  // Modelo de IA que corre 100% en el navegador (WebLLM + WebGPU) — sin
+  // backend, sin API key, sin costo. Se descarga una sola vez (queda
+  // cacheado por el navegador) y después toda la inferencia es local.
+  // Para cambiarlo por uno más grande/preciso (más pesado) o más chico/
+  // liviano (menos preciso), ver la lista de modelos soportados en
+  // https://github.com/mlc-ai/web-llm (prebuiltAppConfig.model_list).
+  const WEBLLM_MODEL_ID = 'Llama-3.2-3B-Instruct-q4f32_1-MLC';
 
   const PLACEHOLDER_MARKERS = ['REEMPLAZAR', 'TU_ID_PUBLICADO'];
   function isPlaceholder(v) {
@@ -1016,33 +1054,50 @@
   }
 
   // ============================================================
-  // Chat: system prompt, historial, loop de tool-use
+  // Chat: system prompt, historial, loop de tool-use (modelo local WebLLM)
   // ============================================================
+
+  // Arma una lista de texto de las tools disponibles (nombre, parámetros,
+  // descripción) a partir de TOOLS, para meterla en el system prompt — acá
+  // no hay una API de "function calling" nativa como la de Gemini/Claude:
+  // el modelo tiene que pedir la tool escribiendo un JSON en su respuesta,
+  // que nosotros detectamos y ejecutamos (esquema tipo ReAct).
+  function toolsDescription() {
+    return TOOLS.map((t) => {
+      const props = (t.input_schema && t.input_schema.properties) || {};
+      const params = Object.entries(props).map(([k, v]) => k + (v.description ? ' (' + v.description + ')' : '')).join(', ');
+      return '- ' + t.name + '(' + params + '): ' + t.description;
+    }).join('\n');
+  }
+
   const SYSTEM_PROMPT = [
-    'Sos un asistente financiero interno de Neix S.A. (ALyC argentino). Tu función es responder preguntas sobre gastos, resultados, facturación y cualquier dato financiero usando exclusivamente la información real del archivo "Resultados por área 2026" en Google Drive, a través de las tools disponibles (buscar_gasto, buscar_resultado, buscar_rubro_mensual, buscar_sueldos, buscar_en_hoja_cruda, meses_disponibles), que consultan datos ya cargados en el navegador desde ese Google Sheet.',
-    'El archivo tiene varias familias de hojas: "Gastos MM,26" (ej. "Gastos 05,26" para mayo), el mayor contable con columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO — usá buscar_gasto para proveedores o pagos puntuales, coincidencia parcial en CONCEPTO. Hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N) más un CONSOLIDADO con el acumulado del período — usá buscar_resultado para facturación, resultado o comparaciones entre áreas. "Gastos fijos", "Clasificación de gastos" y "Capital N", tablas con una columna por mes — usá buscar_rubro_mensual para proveedores recurrentes o clasificación fijo/variable. "Sueldos y CS", sueldo bruto/costo laboral/plus/total por departamento y mes — usá buscar_sueldos. "Resultados" (matriz anual por cuenta) y "Matriz de gastos", de estructura no mapeada — usá buscar_en_hoja_cruda solo si las demás tools no encuentran el dato.',
-    'Si no sabés en qué hoja está un dato, probá primero con la tool más específica al tipo de consulta (proveedor puntual → buscar_gasto; facturación/resultado por área → buscar_resultado; proveedor recurrente o fijo/variable → buscar_rubro_mensual; sueldos → buscar_sueldos) y si ninguna encuentra el dato, probá buscar_en_hoja_cruda antes de decir que no lo encontraste.',
-    'Si no especifican mes, usá meses_disponibles y considerá todas las hojas mensuales relevantes, agrupando el resultado por mes. Si la consulta cruza datos de varias hojas, indicá de qué hoja sale cada dato.',
-    'Nunca inventes montos, proveedores, cuentas ni fechas. Si una tool devuelve encontrado:false o no encontrás el dato en ninguna hoja, decilo claramente en vez de aproximar o suponer.',
-    'Siempre citá la hoja y la fecha/mes de donde sale cada dato.',
-    'Formateá los montos en pesos argentinos con separador de miles y 2 decimales (ej. $2.364.000,00) — usá el monto_formateado que devuelven las tools.',
+    'Sos un asistente financiero interno de Neix S.A. (ALyC argentino). Tu función es responder preguntas sobre gastos, resultados, facturación y cualquier dato financiero usando exclusivamente la información real del archivo "Resultados por área 2026", a través de las herramientas (tools) disponibles, que consultan datos ya cargados en el navegador desde ese Google Sheet.',
+
+    'El archivo tiene varias familias de hojas: "Gastos MM,26" (ej. "Gastos 05,26" para mayo), el mayor contable con columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO — usá buscar_gasto para proveedores o pagos puntuales, coincidencia parcial en CONCEPTO. Hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N) más un CONSOLIDADO con el acumulado del período — usá buscar_resultado para facturación, resultado o comparaciones entre áreas. "Gastos fijos", "Clasificación de gastos" y "Capital N", tablas con una columna por mes — usá buscar_rubro_mensual. "Sueldos y CS" — usá buscar_sueldos. "Resultados" y "Matriz de gastos", de estructura no mapeada — usá buscar_en_hoja_cruda solo si las demás tools no encuentran el dato.',
+
+    'Tools disponibles (no inventes ninguna otra ni ningún parámetro que no esté acá):\n' + toolsDescription(),
+
+    'Para usar una tool: respondé ÚNICA Y EXCLUSIVAMENTE con un JSON de una sola línea, sin explicación antes ni después, con esta forma exacta: {"tool": "nombre_de_la_tool", "args": {...}}. Ejemplo: {"tool": "buscar_gasto", "args": {"query": "Tanoira", "mes": "mayo"}}',
+
+    'Después de pedir una tool, en el próximo turno vas a recibir un mensaje que arranca con "Resultado de la tool" seguido del JSON con el resultado real. Con ese resultado, respondé la pregunta original del usuario en texto plano (nunca en JSON), citando siempre la hoja y el mes de donde sale el dato.',
+
+    'Si podés responder sin necesitar ninguna tool (por ejemplo, un saludo, o una aclaración sobre cómo funciona esto), respondé directo en texto plano, sin JSON.',
+
+    'Nunca inventes montos, proveedores, cuentas ni fechas. Si el resultado de una tool tiene "encontrado": false, o no encontrás el dato en ninguna hoja, decilo claramente en vez de aproximar o suponer.',
+
+    'Formateá los montos en pesos argentinos con separador de miles y 2 decimales (ej. $2.364.000,00) — usá los campos que terminan en "_formateado" que devuelven las tools, ya vienen así.',
+
     'Si hay varios registros que matchean, mostrá el detalle (fecha, concepto, monto) y el total.',
+
     '"CONSOLIDADO" (también "acumulado" o "total") es un pseudo-mes especial que representa los totales del período completo, no un mes puntual.',
+
     'Respondé en español rioplatense, directo y sin vueltas.',
-  ].join(' ');
+  ].join('\n\n');
 
-  // Declaración de las tools en formato Gemini (functionDeclarations). El
-  // "parameters" de cada una es el mismo JSON Schema que ya usábamos en
-  // input_schema — Gemini lo acepta tal cual.
-  const GEMINI_TOOLS = [{
-    functionDeclarations: TOOLS.map((t) => ({ name: t.name, description: t.description, parameters: t.input_schema })),
-  }];
-
-  // v2 porque el formato de conversación cambió de bloques estilo Anthropic
-  // (role assistant/user, content: [...]) a bloques estilo Gemini (role
-  // model/user, parts: [...]) — un historial viejo en localStorage rompería
-  // el render con el formato nuevo.
-  const HISTORY_KEY = 'neix-gastos-chat-history-v2';
+  // v3 porque el formato de conversación volvió a cambiar: ahora es texto
+  // plano estilo {role, content} en vez de los "parts" de Gemini — un
+  // historial viejo en localStorage rompería el render con el formato nuevo.
+  const HISTORY_KEY = 'neix-gastos-chat-history-v3';
   let conversation = loadHistory();
 
   function loadHistory() {
@@ -1065,28 +1120,18 @@
   const chatInput = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-btn');
 
-  function extractText(parts) {
-    if (typeof parts === 'string') return parts;
-    if (!Array.isArray(parts)) return '';
-    return parts.filter((p) => typeof p.text === 'string').map((p) => p.text).join('\n');
-  }
-
-  function getFunctionCalls(parts) {
-    if (!Array.isArray(parts)) return [];
-    return parts.filter((p) => p.functionCall).map((p) => p.functionCall);
-  }
-
   function renderConversation() {
+    const modelStatus = document.getElementById('model-status');
     chatMain.innerHTML = '';
-    const visible = conversation.filter((m) => m.role === 'user' || m.role === 'model');
+    if (modelStatus) chatMain.appendChild(modelStatus);
+    const visible = conversation.filter((m) => !m.hidden && (m.role === 'user' || m.role === 'assistant'));
     if (visible.length === 0) {
       chatMain.appendChild(emptyState);
       return;
     }
     for (const m of visible) {
-      const text = extractText(m.parts);
-      if (!text.trim()) continue;
-      appendBubble(m.role === 'model' ? 'assistant' : 'user', text, false);
+      if (!m.content || !m.content.trim()) continue;
+      appendBubble(m.role, m.content, false);
     }
     chatMain.scrollTop = chatMain.scrollHeight;
   }
@@ -1107,7 +1152,7 @@
     const row = document.createElement('div');
     row.className = 'msg-row assistant';
     row.id = 'thinking-row';
-    row.innerHTML = '<div class="bubble thinking-bubble"><span class="thinking-dots"><span></span><span></span><span></span></span>Consultando datos…</div>';
+    row.innerHTML = '<div class="bubble thinking-bubble"><span class="thinking-dots"><span></span><span></span><span></span></span>Pensando…</div>';
     chatMain.appendChild(row);
     chatMain.scrollTop = chatMain.scrollHeight;
   }
@@ -1117,62 +1162,111 @@
     if (el) el.remove();
   }
 
-  async function callGemini(contents) {
-    const res = await fetch(CONFIG.apiEndpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ systemInstruction: SYSTEM_PROMPT, contents, tools: GEMINI_TOOLS, model: CONFIG.model }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      const detail = (data && (data.error && data.error.message || data.error)) || ('HTTP ' + res.status);
-      throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
-    }
-    const candidate = data.candidates && data.candidates[0];
-    if (!candidate) {
-      const blockReason = data.promptFeedback && data.promptFeedback.blockReason;
-      throw new Error(blockReason ? 'Gemini bloqueó la respuesta (' + blockReason + ')' : 'Gemini no devolvió ninguna respuesta.');
-    }
-    return candidate.content.parts || [];
+  // ---- Modelo local (WebLLM) ----
+  let engine = null;
+  let modelReady = false;
+
+  function setModelStatus(text, pct) {
+    const textEl = document.getElementById('model-status-text');
+    if (textEl) textEl.textContent = text;
+    const barEl = document.getElementById('model-progress-bar');
+    if (barEl && pct != null) barEl.style.width = Math.max(0, Math.min(1, pct)) * 100 + '%';
   }
 
-  const MAX_TOOL_ROUNDS = 6;
+  function setInputReady(ready) {
+    chatInput.disabled = !ready;
+    sendBtn.disabled = !ready;
+    chatInput.placeholder = ready
+      ? 'Preguntá por un proveedor, un mes, un área…'
+      : 'Cargando el modelo de IA…';
+  }
+
+  async function initModel() {
+    setInputReady(false);
+    if (!navigator.gpu) {
+      setModelStatus('Tu navegador no soporta WebGPU — probá con la última versión de Chrome o Edge para usar el modelo local.', 0);
+      const el = document.getElementById('model-status');
+      if (el) el.classList.add('error');
+      return;
+    }
+    try {
+      const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+      engine = new webllm.MLCEngine();
+      engine.setInitProgressCallback((report) => {
+        setModelStatus(report.text || 'Cargando modelo…', report.progress);
+      });
+      await engine.reload(WEBLLM_MODEL_ID);
+      modelReady = true;
+      const el = document.getElementById('model-status');
+      if (el) el.remove();
+      setInputReady(true);
+    } catch (err) {
+      setModelStatus('No se pudo cargar el modelo de IA: ' + err.message, 0);
+      const el = document.getElementById('model-status');
+      if (el) el.classList.add('error');
+    }
+  }
+
+  async function callModel(history) {
+    const messages = [{ role: 'system', content: SYSTEM_PROMPT }]
+      .concat(history.map((m) => ({ role: m.role, content: m.content })));
+    const reply = await engine.chat.completions.create({ messages, temperature: 0.2 });
+    const choice = reply.choices && reply.choices[0];
+    return (choice && choice.message && choice.message.content) || '';
+  }
+
+  // Si la respuesta del modelo es (o contiene) un JSON {"tool": "...", "args": {...}},
+  // la interpretamos como un pedido de tool en vez de una respuesta final.
+  function parseToolCall(text) {
+    const match = (text || '').match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    let parsed;
+    try { parsed = JSON.parse(match[0]); } catch (e) { return null; }
+    if (!parsed || typeof parsed.tool !== 'string') return null;
+    return { name: parsed.tool, args: parsed.args || {} };
+  }
+
+  const MAX_TOOL_ROUNDS = 4;
 
   async function runTurn() {
+    if (!modelReady) {
+      appendBubble('assistant', 'El modelo de IA todavía se está cargando, esperá un momento y probá de nuevo.', true);
+      return;
+    }
     appendThinking();
     try {
       let rounds = 0;
-      let parts = await callGemini(conversation);
-      let calls = getFunctionCalls(parts);
+      let text = await callModel(conversation);
+      let call = parseToolCall(text);
 
-      while (calls.length > 0 && rounds < MAX_TOOL_ROUNDS) {
+      while (call && rounds < MAX_TOOL_ROUNDS) {
         rounds++;
-        conversation.push({ role: 'model', parts });
-
-        const responseParts = calls.map((call) => ({
-          functionResponse: { name: call.name, response: executeTool(call.name, call.args) },
-        }));
-        conversation.push({ role: 'user', parts: responseParts });
+        conversation.push({ role: 'assistant', content: text, hidden: true });
+        const result = executeTool(call.name, call.args);
+        conversation.push({
+          role: 'user',
+          content: 'Resultado de la tool "' + call.name + '": ' + JSON.stringify(result) +
+            '\n\nCon este resultado, respondé la pregunta original del usuario en texto plano (sin JSON), citando la hoja y el mes.',
+          hidden: true,
+        });
         saveHistory();
-
-        parts = await callGemini(conversation);
-        calls = getFunctionCalls(parts);
+        text = await callModel(conversation);
+        call = parseToolCall(text);
       }
 
-      conversation.push({ role: 'model', parts });
+      conversation.push({ role: 'assistant', content: text });
       saveHistory();
       removeThinking();
-      const text = extractText(parts) || '(sin respuesta de texto)';
-      appendBubble('assistant', text, false);
+      appendBubble('assistant', text || '(sin respuesta de texto)', false);
     } catch (err) {
       removeThinking();
-      appendBubble('assistant', 'Ocurrió un error al consultar al asistente: ' + err.message, true);
+      appendBubble('assistant', 'Ocurrió un error al consultar al modelo: ' + err.message, true);
     }
   }
 
   function sendMessage(text) {
-    if (!text.trim()) return;
-    conversation.push({ role: 'user', parts: [{ text: text.trim() }] });
+    if (!text.trim() || !modelReady) return;
+    conversation.push({ role: 'user', content: text.trim() });
     saveHistory();
     if (chatMain.contains(emptyState)) emptyState.remove();
     appendBubble('user', text.trim(), false);
@@ -1213,8 +1307,10 @@
   // ============================================================
   // Init
   // ============================================================
+  setInputReady(false);
   renderConversation();
   loadAllData();
+  initModel();
 })();
 </script>
 </body>
