@@ -93,137 +93,119 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
   }
-  .empty-state {
-    margin: auto;
-    text-align: center;
+  .intro {
     color: var(--muted);
-    max-width: 480px;
-  }
-  .empty-state h2 {
-    color: var(--dark);
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-  .empty-state .examples {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     font-size: 13px;
+    max-width: 640px;
   }
-  .empty-state .examples span {
+  .intro strong { color: var(--dark); }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tab {
     background: var(--white);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dark);
     cursor: pointer;
   }
-  .empty-state .examples span:hover { border-color: var(--red); }
-
-  .msg-row {
-    display: flex;
-    max-width: 80%;
-  }
-  .msg-row.user { align-self: flex-end; }
-  .msg-row.assistant { align-self: flex-start; }
-  .bubble {
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-  .msg-row.user .bubble {
+  .tab:hover { border-color: var(--red); }
+  .tab.active {
     background: var(--dark);
     color: var(--white);
-    border-radius: 12px 12px 2px 12px;
+    border-color: var(--dark);
   }
-  .msg-row.assistant .bubble {
-    background: var(--white);
-    border: 1px solid var(--line);
-    color: var(--dark);
-    border-radius: 12px 12px 12px 2px;
-  }
-  .msg-row.assistant .bubble.error {
-    border-color: var(--red);
-    color: var(--red);
-  }
-  .thinking-bubble {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .thinking-dots span {
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--muted);
-    margin-right: 2px;
-    animation: blink 1.2s infinite;
-  }
-  .thinking-dots span:nth-child(2) { animation-delay: .2s; }
-  .thinking-dots span:nth-child(3) { animation-delay: .4s; }
-  @keyframes blink { 0%,80%,100%{opacity:.2;} 40%{opacity:1;} }
 
-  footer {
-    padding: 12px 24px 20px;
-    background: var(--bg);
-    border-top: 1px solid var(--line);
-  }
-  .input-row {
+  .panel { display: flex; flex-direction: column; gap: 14px; }
+  .panel form {
     display: flex;
     gap: 10px;
-    max-width: 900px;
-    margin: 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
   }
-  textarea#chat-input {
-    flex: 1;
-    resize: none;
+  .panel input[type="text"], .panel select {
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 12px 14px;
+    border-radius: 8px;
+    padding: 10px 12px;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     color: var(--dark);
     background: var(--white);
-    max-height: 120px;
   }
-  textarea#chat-input:focus { outline: none; border-color: var(--red); }
-  button#send-btn {
+  .panel input[type="text"] { flex: 1; min-width: 220px; }
+  .panel input[type="text"]:focus, .panel select:focus { outline: none; border-color: var(--red); }
+  .panel button {
     background: var(--red);
     color: var(--white);
     border: none;
-    border-radius: 10px;
-    padding: 0 20px;
+    border-radius: 8px;
+    padding: 10px 20px;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
   }
-  button#send-btn:disabled { opacity: .5; cursor: default; }
+  .panel button:hover { opacity: .92; }
+  .panel .hint {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .resultados { display: flex; flex-direction: column; gap: 10px; }
+  .result-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .result-row { display: flex; gap: 8px; padding: 2px 0; }
+  .result-label {
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    min-width: 150px;
+    flex-shrink: 0;
+  }
+  .result-value { color: var(--dark); word-break: break-word; }
+  .result-total {
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    padding-top: 4px;
+  }
+  .result-note {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+  }
+  .no-result { color: var(--muted); font-size: 13px; }
+
+  footer {
+    padding: 10px 24px 16px;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+  }
   .foot-note {
     text-align: center;
     font-size: 11px;
     color: var(--muted);
     font-family: 'DM Mono', monospace;
-    margin: 8px auto 0;
+    margin: 0 auto;
     max-width: 900px;
-  }
-  .foot-note button.clear-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    text-decoration: underline;
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 0;
   }
 
   main::-webkit-scrollbar { width: 8px; }
@@ -250,26 +232,110 @@
   </div>
 </header>
 
-<main id="chat-main">
-  <div class="empty-state" id="empty-state">
-    <h2>Preguntame sobre los gastos de Neix</h2>
-    <p>Consulto en vivo la Matriz de gastos, la Clasificación de gastos y las hojas de EERR. Solo respondo con datos que puedo verificar.</p>
-    <div class="examples">
-      <span data-example="¿Cuánto le pagamos a Tanoira en mayo?">¿Cuánto le pagamos a Tanoira en mayo?</span>
-      <span data-example="¿Cuáles son los totales por área en abril?">¿Cuáles son los totales por área en abril?</span>
-      <span data-example="Top 5 proveedores por gasto en el año">Top 5 proveedores por gasto en el año</span>
-      <span data-example="Comparar gastos fijos y variables entre marzo y abril">Comparar gastos fijos y variables entre marzo y abril</span>
-    </div>
+<main id="search-main">
+  <p class="intro">Buscador en vivo sobre el archivo <strong>"Resultados por área 2026"</strong>. Elegí qué querés consultar, completá los filtros y apretá <strong>Buscar</strong> — todo corre en el navegador contra los datos ya cargados, sin ningún servicio externo de por medio.</p>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="gastos" type="button">Gastos (mayor contable)</button>
+    <button class="tab" data-tab="resultados" type="button">Resultados por área</button>
+    <button class="tab" data-tab="rubros" type="button">Rubros mensuales</button>
+    <button class="tab" data-tab="sueldos" type="button">Sueldos y CS</button>
+    <button class="tab" data-tab="cruda" type="button">Búsqueda general</button>
+    <button class="tab" data-tab="meses" type="button">Hojas cargadas</button>
+  </div>
+
+  <div class="panel" data-panel="gastos">
+    <form id="form-gastos">
+      <input type="text" id="gastos-query" placeholder="Proveedor o texto a buscar (ej: Tanoira)" required>
+      <select id="gastos-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en las hojas "Gastos MM,26" (mayor contable), coincidencia parcial sobre CONCEPTO.</p>
+    <div class="resultados" id="resultados-gastos"></div>
+  </div>
+
+  <div class="panel" data-panel="resultados" hidden>
+    <form id="form-resultados">
+      <input type="text" id="resultados-query" placeholder="Rubro (ej: facturación, resultado, sueldos mesa)" required>
+      <select id="resultados-mes">
+        <option value="">Todos</option>
+        <option value="consolidado">Consolidado</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en las hojas de resultados/rentabilidad por área y en el CONSOLIDADO.</p>
+    <div class="resultados" id="resultados-resultados"></div>
+  </div>
+
+  <div class="panel" data-panel="rubros" hidden>
+    <form id="form-rubros">
+      <input type="text" id="rubros-query" placeholder="Rubro o proveedor recurrente (ej: Tanoira Cassagne, sueldos)" required>
+      <select id="rubros-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en "Gastos fijos", "Clasificación de gastos" y "Capital N" (una columna por mes).</p>
+    <div class="resultados" id="resultados-rubros"></div>
+  </div>
+
+  <div class="panel" data-panel="sueldos" hidden>
+    <form id="form-sueldos">
+      <input type="text" id="sueldos-departamento" placeholder="Departamento (ej: mesa, rrhh) — opcional">
+      <select id="sueldos-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Sueldo bruto, costo laboral, plus, total y % por departamento y mes, según "Sueldos y CS".</p>
+    <div class="resultados" id="resultados-sueldos"></div>
+  </div>
+
+  <div class="panel" data-panel="cruda" hidden>
+    <form id="form-cruda">
+      <input type="text" id="cruda-query" placeholder="Texto a buscar en cualquier columna" required>
+      <select id="cruda-hoja">
+        <option value="">Ambas hojas</option>
+        <option value="Resultados">Resultados</option>
+        <option value="Matriz de gastos">Matriz de gastos</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Búsqueda de texto genérica sobre "Resultados" y "Matriz de gastos" (estructura no mapeada a una búsqueda específica). Usar solo si las otras pestañas no encontraron el dato.</p>
+    <div class="resultados" id="resultados-cruda"></div>
+  </div>
+
+  <div class="panel" data-panel="meses" hidden>
+    <p class="hint">Qué hojas de cada tipo están realmente cargadas en este momento.</p>
+    <div class="resultados" id="resultados-meses"></div>
   </div>
 </main>
 
 <footer>
-  <div class="input-row">
-    <textarea id="chat-input" rows="1" placeholder="Preguntá por un proveedor, un mes, un área…"></textarea>
-    <button id="send-btn">Enviar</button>
-  </div>
   <div class="foot-note">
-    Los montos se verifican contra los datos cargados de Google Sheets. Si no se encuentra un dato, el asistente lo va a decir en vez de inventarlo. · <button class="clear-btn" id="clear-btn">Borrar historial</button>
+    Los montos se verifican contra los datos cargados de Google Sheets. Si no se encuentra un dato, se muestra explícitamente en vez de inventarlo.
   </div>
 </footer>
 
@@ -278,34 +344,61 @@
   'use strict';
 
   // ============================================================
-  // CONFIG — completar antes de deployar
+  // CONFIG — gids reales de "Resultados por área 2026"
   // ============================================================
-  // 1. En Google Sheets: Archivo > Compartir > Publicar en la Web > elegir la
-  //    hoja > formato CSV > Publicar. Repetir "hoja" por cada pestaña que
-  //    quieras usar (o publicar todo el documento y usar el gid de cada una).
-  // 2. Copiar la URL publicada. Tiene esta forma:
-  //    https://docs.google.com/spreadsheets/d/e/<ID_LARGO>/pub?gid=<GID>&single=true&output=csv
-  //    Reemplazar el <GID> por el literal "{GID}" en CSV_URL_TEMPLATE de abajo.
-  // 3. Completar el gid real de cada pestaña en GIDS (click en la pestaña en
-  //    Google Sheets y mirar el "gid=" en la URL del navegador).
+  // Familias de hojas del archivo:
+  //   - "Gastos MM,26" (una por mes): mayor contable con columnas CUENTA,
+  //     FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO.
+  //   - Resultados/rentabilidad por área (una por mes + CONSOLIDADO): una
+  //     fila por rubro (facturación, gastos directos/indirectos, etc.) y una
+  //     columna por área (Mesa, Banca Corporativa, Banca Privada, Middle
+  //     Office/FAs, Cap N).
+  //   - Tablas mensuales de gastos (Gastos fijos, Clasificación de gastos,
+  //     Capital N): una fila por rubro/proveedor y una columna por mes.
+  //   - Sueldos y CS: un mini-bloque por mes con sueldo bruto/costo
+  //     laboral/plus/total por departamento.
+  //   - Hojas "crudas" (Resultados, Matriz de gastos): estructura no
+  //     verificada en detalle — se cargan como grilla genérica (encabezado +
+  //     filas) para poder buscar por texto sin forzar un parseo específico.
+  // Para agregar un mes nuevo: Archivo > Compartir > Publicar en la Web >
+  // elegir la pestaña > CSV > Publicar, y copiar el gid de la URL publicada.
   const CONFIG = {
     csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?gid={GID}&single=true&output=csv',
     gids: {
-      matrizGastos: '44234235',
-      clasificacionGastos: '2122908998',
-      // "consolidado" es la hoja con los totales acumulados de EERR del período
-      // completo (no es un mes puntual) — se expone como el mes especial "CONSOLIDADO".
-      consolidado: '820949426',
-      meses: {
+      // Hojas "Gastos MM,26" — mayor contable detallado, una por mes.
+      gastos: {
+        '01': '504407038',
+        '02': '1383245355',
+        '03': '460907963',
+        '04': '617795229',
+        '05': '1112341850',
+      },
+      // Hojas de resultados/rentabilidad por área, una por mes. "consolidado"
+      // es la hoja con el acumulado del período completo (no es un mes
+      // puntual) — se expone como el pseudo-mes especial "CONSOLIDADO".
+      resultados: {
+        consolidado: '820949426',
         enero: '226754153',
         febrero: '1511706532',
         marzo: '1921579671',
         abril: '921185054',
         mayo: '1385764727',
       },
+      // Tablas mensuales de gastos: label + una columna por mes (Enero..Mayo).
+      tablasMensuales: {
+        gastosFijos: '1167018877',
+        clasificacionGastos: '2122908998',
+        capitalN: '314640513',
+      },
+      // Sueldos y CS: bloques repetidos por mes (Enero..Mayo) con
+      // departamento, sueldo bruto, costo laboral, plus, total y %.
+      sueldosYCS: '987036881',
+      // Hojas de estructura no verificada: se cargan como grilla genérica.
+      hojasCrudas: {
+        resultados: '1908736161',
+        matrizGastos: '44234235',
+      },
     },
-    apiEndpoint: '/api/chat',
-    model: 'claude-sonnet-5',
   };
 
   const PLACEHOLDER_MARKERS = ['REEMPLAZAR', 'TU_ID_PUBLICADO'];
@@ -318,11 +411,17 @@
   // ============================================================
   const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
   const MES_ABREV = { ENE: 'ENERO', FEB: 'FEBRERO', MAR: 'MARZO', ABR: 'ABRIL', MAY: 'MAYO', JUN: 'JUNIO', JUL: 'JULIO', AGO: 'AGOSTO', SEP: 'SEPTIEMBRE', SET: 'SEPTIEMBRE', OCT: 'OCTUBRE', NOV: 'NOVIEMBRE', DIC: 'DICIEMBRE' };
+  // Nombre de mes -> sufijo numérico usado en las hojas "Gastos MM,26" (ej. MAYO -> '05').
+  const MES_A_NUMERO = { ENERO: '01', FEBRERO: '02', MARZO: '03', ABRIL: '04', MAYO: '05', JUNIO: '06', JULIO: '07', AGOSTO: '08', SEPTIEMBRE: '09', OCTUBRE: '10', NOVIEMBRE: '11', DICIEMBRE: '12' };
+  // Áreas de negocio de Neix (Mesa, Banca Corporativa, Banca Privada, Middle
+  // Office/FAs) más Cap N, que aparecen como columnas en las hojas de
+  // resultados/rentabilidad y en el CONSOLIDADO.
   const AREA_ALIASES = {
     'MESA': ['MESA'],
-    'BANCA CORPORATIVA': ['BANCA CORPORATIVA', 'CORPORATIVA', 'CORP'],
-    'BANCA PRIVADA': ['BANCA PRIVADA', 'PRIVADA'],
-    'FAS': ['FAS', 'FINANCIAL ADVISORS', 'ASESORES FINANCIEROS'],
+    'BANCA CORPORATIVA': ['BANCA CORPORATIVA', 'CORPORATIVA'],
+    'BANCA PRIVADA': ['BANCA PRIVADA'],
+    'MIDDLE OFFICE / FAS': ['MIDDLE OFFICE', 'FAS', 'FINANCIAL ADVISORS', 'ASESORES FINANCIEROS'],
+    'CAP N': ['CAP N', 'CAPN'],
   };
 
   function normalizeText(s) {
@@ -334,7 +433,7 @@
   }
 
   // Alias que representan el período acumulado (no un mes puntual) — mapean
-  // al pseudo-mes especial "CONSOLIDADO", cargado desde CONFIG.gids.consolidado.
+  // al pseudo-mes especial "CONSOLIDADO", cargado desde CONFIG.gids.resultados.consolidado.
   const CONSOLIDADO_ALIASES = ['CONSOLIDADO', 'ACUMULADO', 'ANUAL', 'TOTAL', 'AÑO', 'PERIODO', 'PERÍODO'];
 
   function normalizeMes(input) {
@@ -397,152 +496,202 @@
 
   function formatARS(n) {
     if (n == null || isNaN(n)) return null;
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
   }
 
-  function findHeaderRow(rows, keywords) {
-    for (let i = 0; i < Math.min(rows.length, 12); i++) {
-      const norm = (rows[i] || []).map(normalizeText);
-      if (keywords.some((k) => norm.some((c) => c.includes(k)))) return i;
-    }
-    return -1;
+  // Normaliza un encabezado de columna quitando TODOS los espacios (no solo
+  // colapsándolos), porque en algunas hojas "Gastos MM,26" el encabezado
+  // viene espaciado letra por letra: "C U E N T A" en vez de "CUENTA".
+  function compactHeader(s) {
+    return normalizeText(s).replace(/\s+/g, '');
   }
 
   // ============================================================
   // Parsers adaptativos por hoja
   // ============================================================
-  function parseMatrizGastos(rows) {
-    const headerRowIdx = findHeaderRow(rows, ['PROVEEDOR']);
-    if (headerRowIdx === -1) return { registros: [], rawGrid: rows };
-    const header = rows[headerRowIdx].map(normalizeText);
-    const idxProveedor = header.findIndex((h) => h.includes('PROVEEDOR'));
-    const idxConcepto = header.findIndex((h) => h.includes('CONCEPTO'));
-    const idxArea = header.findIndex((h) => h.includes('AREA'));
-    const idxMes = header.findIndex((h) => h === 'MES');
-    const idxMonto = header.findIndex((h) => h.includes('MONTO') || h.includes('IMPORTE'));
-    const monthCols = [];
-    header.forEach((h, i) => {
-      const mes = normalizeMes(h);
-      if (mes) monthCols.push({ idx: i, mes });
-    });
 
-    const registros = [];
+  // Hojas "Gastos MM,26": mayor contable. Estructura real:
+  //   CUENTA | FECHA | ORDEN | CONCEPTO | DEBE | HABER | SALDO
+  // Cada cuenta arranca con una fila "Cta: <código> <nombre>" en la columna
+  // CUENTA (el resto de esa fila es el saldo inicial), seguida de los
+  // movimientos (CUENTA vacía) y termina con una fila "TOTALES DEL PERIODO".
+  function parseGastosLedger(rows) {
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 12); i++) {
+      const compact = (rows[i] || []).map(compactHeader);
+      if (compact.includes('CONCEPTO') && compact.includes('CUENTA')) { headerRowIdx = i; break; }
+    }
+    if (headerRowIdx === -1) return { movimientos: [], rawGrid: rows };
+    const compact = rows[headerRowIdx].map(compactHeader);
+    const idxCuenta = compact.indexOf('CUENTA');
+    const idxFecha = compact.indexOf('FECHA');
+    const idxOrden = compact.indexOf('ORDEN');
+    const idxConcepto = compact.indexOf('CONCEPTO');
+    const idxDebe = compact.indexOf('DEBE');
+    const idxHaber = compact.indexOf('HABER');
+    const idxSaldo = compact.indexOf('SALDO');
+
+    const movimientos = [];
+    let cuentaActual = null;
     for (let r = headerRowIdx + 1; r < rows.length; r++) {
       const row = rows[r] || [];
-      if (row.every((c) => !(c || '').toString().trim())) continue;
-      const proveedorRaw = idxProveedor > -1 ? row[idxProveedor] : '';
-      const proveedor = (proveedorRaw || '').toString().trim();
-      if (!proveedor) continue;
-      const concepto = idxConcepto > -1 ? (row[idxConcepto] || '').toString().trim() : '';
-      const area = idxArea > -1 ? (row[idxArea] || '').toString().trim() : '';
-
-      if (idxMes > -1 && idxMonto > -1) {
-        const monto = parseMonto(row[idxMonto]);
-        const mes = normalizeMes(row[idxMes]);
-        if (monto != null && mes) registros.push({ proveedor, concepto, area, mes, monto });
-      } else if (monthCols.length > 0) {
-        for (const { idx, mes } of monthCols) {
-          const monto = parseMonto(row[idx]);
-          if (monto != null && monto !== 0) registros.push({ proveedor, concepto, area, mes, monto });
-        }
+      const cuentaRaw = idxCuenta > -1 ? (row[idxCuenta] || '').toString().trim() : '';
+      if (cuentaRaw) {
+        // Fila de apertura de cuenta ("Cta: 4.2.3.10.01 Gtos Hardw y Comp Mesa"): actualiza el
+        // contexto de cuenta pero no es un movimiento en sí.
+        const m = /^Cta:?\s*(.+)$/i.exec(cuentaRaw);
+        cuentaActual = m ? m[1].trim() : cuentaRaw;
+        continue;
       }
+      const concepto = idxConcepto > -1 ? (row[idxConcepto] || '').toString().trim() : '';
+      if (!concepto) continue;
+      if (/^TOTALES\s+DEL\s+PERIODO/i.test(concepto)) continue;
+      if (/^S\s*A\s*L\s*D\s*O\s+I\s*N\s*I\s*C\s*I\s*A\s*L/i.test(concepto)) continue;
+      const fecha = idxFecha > -1 ? (row[idxFecha] || '').toString().trim() : '';
+      const orden = idxOrden > -1 ? (row[idxOrden] || '').toString().trim() : '';
+      const debe = idxDebe > -1 ? parseMonto(row[idxDebe]) : null;
+      const haber = idxHaber > -1 ? parseMonto(row[idxHaber]) : null;
+      const saldo = idxSaldo > -1 ? parseMonto(row[idxSaldo]) : null;
+      if (!fecha && debe == null && haber == null) continue;
+      movimientos.push({ cuenta: cuentaActual, fecha, orden, concepto, debe, haber, saldo });
     }
-    return { registros, rawGrid: rows };
+    return { movimientos, rawGrid: rows };
   }
 
-  function parseClasificacion(rows) {
-    const porMes = {};
+  // Hojas de resultados/rentabilidad por área y CONSOLIDADO: una fila por
+  // rubro/línea (facturación, gastos directos/indirectos, cada sub-rubro) y
+  // una columna por área (Mesa, Banca Corporativa, Banca Privada, Middle
+  // Office/FAs, Cap N), más columnas de Total y Notas. No se fuerza una
+  // clasificación fija (ingresos/egresos/resultado): se guarda cada fila tal
+  // cual está en la hoja para poder buscar por rubro.
+  function parseResultadosHoja(rows) {
+    const AREAS = Object.keys(AREA_ALIASES);
+    let headerRowIdx = -1;
+    let areaCols = [];
+    for (let i = 0; i < Math.min(rows.length, 12); i++) {
+      const header = (rows[i] || []).map(normalizeText);
+      const cols = [];
+      header.forEach((h, idx) => {
+        const canon = AREAS.find((a) => AREA_ALIASES[a].some((alias) => h.includes(normalizeText(alias))));
+        if (canon) cols.push({ idx, area: canon });
+      });
+      if (cols.length >= 2) { headerRowIdx = i; areaCols = cols; break; }
+    }
+    if (headerRowIdx === -1) return { filas: [], areaCols: [], rawGrid: rows };
 
-    // Caso A: filas = Fijo/Variable/Total, columnas = meses. Buscamos la fila
-    // de encabezado por sus nombres de mes (no por "Fijo"/"Variable", que
-    // aparecen en las filas de datos, no en el encabezado).
+    const header = rows[headerRowIdx].map(normalizeText);
+    const areaIdxSet = new Set(areaCols.map((c) => c.idx));
+    const labelIdx = header.findIndex((h) => h.includes('NOMBRE') && h.includes('CUENTA'));
+    const totalIdx = header.findIndex((h, i) => !areaIdxSet.has(i) && (h.includes('TOTAL') || h.includes('TOTALES')));
+    const notasIdx = header.findIndex((h) => h.includes('NOTA'));
+
+    const filas = [];
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const label = (row[labelIdx > -1 ? labelIdx : 0] || '').toString().trim();
+      if (!label) continue;
+      const values = {};
+      for (const { idx, area } of areaCols) {
+        const val = parseMonto(row[idx]);
+        if (val != null) values[area] = val;
+      }
+      const total = totalIdx > -1 ? parseMonto(row[totalIdx]) : null;
+      const notas = notasIdx > -1 ? (row[notasIdx] || '').toString().trim() : '';
+      if (Object.keys(values).length === 0 && total == null) continue;
+      filas.push({ label, values, total, notas });
+    }
+    return { filas, areaCols: areaCols.map((c) => c.area), rawGrid: rows };
+  }
+
+  // Tablas mensuales de gastos (Gastos fijos, Clasificación de gastos,
+  // Capital N): una fila por rubro/proveedor, columna 0 = label, columnas
+  // siguientes = meses (Enero..Mayo). En "Clasificación de gastos" hay
+  // además una columna intermedia con la etiqueta Fijo/Variable, que se
+  // guarda en "tag".
+  function parseTablaMensual(rows) {
     let headerRowIdx = -1;
     let monthCols = [];
-    for (let i = 0; i < Math.min(rows.length, 6); i++) {
+    for (let i = 0; i < Math.min(rows.length, 8); i++) {
       const header = (rows[i] || []).map(normalizeText);
       const cols = [];
       header.forEach((h, idx) => { const mes = normalizeMes(h); if (mes) cols.push({ idx, mes }); });
       if (cols.length >= 2) { headerRowIdx = i; monthCols = cols; break; }
     }
+    if (headerRowIdx === -1) return { filas: [], rawGrid: rows };
+    const firstMonthIdx = Math.min(...monthCols.map((c) => c.idx));
 
-    if (headerRowIdx > -1) {
-      for (let r = headerRowIdx + 1; r < rows.length; r++) {
-        const row = rows[r] || [];
-        const label = normalizeText(row[0]);
-        let key = null;
-        if (label.includes('FIJO')) key = 'fijo';
-        else if (label.includes('VARIABLE')) key = 'variable';
-        else if (label.includes('TOTAL')) key = 'total';
-        if (!key) continue;
-        for (const { idx, mes } of monthCols) {
-          const val = parseMonto(row[idx]);
-          if (val == null) continue;
-          porMes[mes] = porMes[mes] || {};
-          porMes[mes][key] = val;
-        }
-      }
-      return { porMes, rawGrid: rows };
-    }
-
-    // Caso B: columnas = Mes, Fijo, Variable, Total (una fila por mes).
-    const headerRowIdxB = findHeaderRow(rows, ['FIJO', 'VARIABLE']);
-    if (headerRowIdxB === -1) return { porMes, rawGrid: rows };
-    const header = rows[headerRowIdxB].map(normalizeText);
-    const idxMes = header.findIndex((h) => h === 'MES');
-    const idxFijo = header.findIndex((h) => h.includes('FIJO'));
-    const idxVariable = header.findIndex((h) => h.includes('VARIABLE'));
-    const idxTotal = header.findIndex((h) => h.includes('TOTAL'));
-    for (let r = headerRowIdxB + 1; r < rows.length; r++) {
+    const filas = [];
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
       const row = rows[r] || [];
-      const mes = normalizeMes(idxMes > -1 ? row[idxMes] : row[0]);
-      if (!mes) continue;
-      porMes[mes] = {
-        fijo: idxFijo > -1 ? parseMonto(row[idxFijo]) : null,
-        variable: idxVariable > -1 ? parseMonto(row[idxVariable]) : null,
-        total: idxTotal > -1 ? parseMonto(row[idxTotal]) : null,
-      };
+      const label = (row[0] || '').toString().trim();
+      if (!label) continue;
+      const tag = row.slice(1, firstMonthIdx).map((c) => (c || '').toString().trim()).filter(Boolean).join(' ') || null;
+      const porMes = {};
+      for (const { idx, mes } of monthCols) {
+        const val = parseMonto(row[idx]);
+        if (val != null) porMes[mes] = val;
+      }
+      if (Object.keys(porMes).length === 0) continue;
+      filas.push({ label, tag, porMes });
+    }
+    return { filas, rawGrid: rows };
+  }
+
+  // Hoja "Sueldos y CS": un mini-bloque por mes. Cada bloque arranca con una
+  // fila "<MES> | SUELDO BRUTO | COSTO LABORAL | PLUS | TOTAL | %" y le
+  // siguen filas de departamento hasta la fila en blanco / próximo mes.
+  function parseSueldosPorMes(rows) {
+    const porMes = {};
+    let mesActual = null;
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const c0 = normalizeText(row[0]);
+      if (MESES.includes(c0) && normalizeText(row[1]).includes('SUELDO')) {
+        mesActual = c0;
+        porMes[mesActual] = [];
+        continue;
+      }
+      if (!mesActual) continue;
+      const departamento = (row[0] || '').toString().trim();
+      if (!departamento) continue;
+      const sueldoBruto = parseMonto(row[1]);
+      const costoLaboral = parseMonto(row[2]);
+      const plus = parseMonto(row[3]);
+      const total = parseMonto(row[4]);
+      const porcentaje = (row[5] || '').toString().trim() || null;
+      if (sueldoBruto == null && costoLaboral == null && total == null) continue;
+      porMes[mesActual].push({ departamento, sueldoBruto, costoLaboral, plus, total, porcentaje });
     }
     return { porMes, rawGrid: rows };
   }
 
-  function parseEERR(rows) {
-    const AREAS = Object.keys(AREA_ALIASES);
-    const headerRowIdx = findHeaderRow(rows, AREAS.flatMap((a) => AREA_ALIASES[a]));
-    const porArea = {};
-    if (headerRowIdx === -1) return { porArea, rawGrid: rows };
-    const header = rows[headerRowIdx].map(normalizeText);
-    const areaCols = [];
-    header.forEach((h, i) => {
-      const canon = AREAS.find((a) => AREA_ALIASES[a].some((alias) => h.includes(normalizeText(alias))));
-      if (canon) areaCols.push({ idx: i, area: canon });
-    });
-    if (areaCols.length === 0) return { porArea, rawGrid: rows };
-
-    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+  // Hojas de estructura no verificada (Resultados, Matriz de gastos): se
+  // toma la primera fila no vacía como encabezado y se arma una lista de
+  // filas como objetos {columna: valor}, sin forzar ninguna semántica.
+  function parseHojaCruda(rows) {
+    const headerIdx = rows.findIndex((r) => (r || []).some((c) => (c || '').toString().trim()));
+    if (headerIdx === -1) return { header: [], filas: [], rawGrid: rows };
+    const header = (rows[headerIdx] || []).map((h) => (h || '').toString().trim());
+    const filas = [];
+    for (let r = headerIdx + 1; r < rows.length; r++) {
       const row = rows[r] || [];
-      const label = normalizeText(row[0]);
-      let key = null;
-      if (label.includes('INGRESO')) key = 'ingresos';
-      else if (label.includes('EGRESO') || label.includes('GASTO')) key = 'egresos';
-      else if (label.includes('RESULTADO') || label.includes('UTILIDAD') || label.includes('GANANCIA')) key = 'resultado';
-      if (!key) continue;
-      for (const { idx, area } of areaCols) {
-        const val = parseMonto(row[idx]);
-        if (val == null) continue;
-        porArea[area] = porArea[area] || {};
-        porArea[area][key] = val;
-      }
+      if (row.every((c) => !(c || '').toString().trim())) continue;
+      const obj = {};
+      header.forEach((h, i) => { if (h) obj[h] = row[i] != null ? row[i].toString().trim() : ''; });
+      filas.push(obj);
     }
-    return { porArea, rawGrid: rows };
+    return { header, filas, rawGrid: rows };
   }
 
   // ============================================================
   // Estado de datos
   // ============================================================
   const Data = {
-    gastos: [],           // [{proveedor, concepto, area, mes, monto}]
-    clasificacion: {},     // {MES: {fijo, variable, total}}
-    eerr: {},               // {MES: {porArea: {...}}}
+    gastosPorMes: {},        // {'MM': [{cuenta, fecha, orden, concepto, debe, haber, saldo}]}
+    resultadosPorHoja: {},   // {MES_O_CONSOLIDADO: {filas: [{label, values:{area:monto}, total, notas}], areaCols}}
+    tablasMensuales: {},     // {gastosFijos|clasificacionGastos|capitalN: {filas: [{label, tag, porMes}]}}
+    sueldosYCS: null,        // {porMes: {MES: [{departamento, sueldoBruto, costoLaboral, plus, total, porcentaje}]}}
+    hojasCrudas: {},         // {resultados|matrizGastos: {header, filas}}
     lastLoaded: null,
     loadErrors: [],
   };
@@ -560,53 +709,75 @@
       });
   }
 
+  const NOMBRES_TABLAS_MENSUALES = { gastosFijos: 'Gastos fijos', clasificacionGastos: 'Clasificación de gastos', capitalN: 'Capital N' };
+  const NOMBRES_HOJAS_CRUDAS = { resultados: 'Resultados', matrizGastos: 'Matriz de gastos' };
+
   async function loadAllData() {
     setStatus('loading', 'Cargando datos…');
-    Data.gastos = [];
-    Data.clasificacion = {};
-    Data.eerr = {};
+    Data.gastosPorMes = {};
+    Data.resultadosPorHoja = {};
+    Data.tablasMensuales = {};
+    Data.sueldosYCS = null;
+    Data.hojasCrudas = {};
     Data.loadErrors = [];
 
     const tasks = [];
 
-    if (!isPlaceholder(CONFIG.gids.matrizGastos)) {
+    const gastosEntries = Object.entries(CONFIG.gids.gastos || {});
+    for (const [mm, gid] of gastosEntries) {
+      if (isPlaceholder(gid)) continue;
       tasks.push(
-        fetchCsv(CONFIG.gids.matrizGastos)
-          .then((rows) => { Data.gastos = parseMatrizGastos(rows).registros; })
-          .catch((e) => Data.loadErrors.push('Matriz de gastos: ' + e.message))
+        fetchCsv(gid)
+          .then((rows) => { Data.gastosPorMes[mm] = parseGastosLedger(rows).movimientos; })
+          .catch((e) => Data.loadErrors.push('Gastos ' + mm + ',26: ' + e.message))
       );
-    } else {
-      Data.loadErrors.push('Matriz de gastos: falta configurar la URL/gid en CONFIG');
+    }
+    if (gastosEntries.every(([, gid]) => isPlaceholder(gid))) {
+      Data.loadErrors.push('Hojas "Gastos MM,26": falta configurar los gids en CONFIG');
     }
 
-    if (!isPlaceholder(CONFIG.gids.clasificacionGastos)) {
-      tasks.push(
-        fetchCsv(CONFIG.gids.clasificacionGastos)
-          .then((rows) => { Data.clasificacion = parseClasificacion(rows).porMes; })
-          .catch((e) => Data.loadErrors.push('Clasificación de gastos: ' + e.message))
-      );
-    } else {
-      Data.loadErrors.push('Clasificación de gastos: falta configurar la URL/gid en CONFIG');
-    }
-
-    const mesesEntries = Object.entries(CONFIG.gids.meses || {});
-    for (const [nombreMes, gid] of mesesEntries) {
+    const resultadosEntries = Object.entries(CONFIG.gids.resultados || {});
+    for (const [nombreMes, gid] of resultadosEntries) {
       if (isPlaceholder(gid)) continue;
       tasks.push(
         fetchCsv(gid)
           .then((rows) => {
-            const mesKey = normalizeMes(nombreMes) || normalizeText(nombreMes);
-            Data.eerr[mesKey] = parseEERR(rows);
+            const key = nombreMes === 'consolidado' ? 'CONSOLIDADO' : (normalizeMes(nombreMes) || normalizeText(nombreMes));
+            Data.resultadosPorHoja[key] = parseResultadosHoja(rows);
           })
-          .catch((e) => Data.loadErrors.push('EERR ' + nombreMes + ': ' + e.message))
+          .catch((e) => Data.loadErrors.push('Resultados ' + nombreMes + ': ' + e.message))
+      );
+    }
+    if (resultadosEntries.every(([, gid]) => isPlaceholder(gid))) {
+      Data.loadErrors.push('Hojas de resultados/rentabilidad por área: falta configurar los gids en CONFIG');
+    }
+
+    const tablasMensualesEntries = Object.entries(CONFIG.gids.tablasMensuales || {});
+    for (const [clave, gid] of tablasMensualesEntries) {
+      if (isPlaceholder(gid)) continue;
+      tasks.push(
+        fetchCsv(gid)
+          .then((rows) => { Data.tablasMensuales[clave] = parseTablaMensual(rows); })
+          .catch((e) => Data.loadErrors.push((NOMBRES_TABLAS_MENSUALES[clave] || clave) + ': ' + e.message))
       );
     }
 
-    if (!isPlaceholder(CONFIG.gids.consolidado)) {
+    const gidSueldos = CONFIG.gids.sueldosYCS;
+    if (!isPlaceholder(gidSueldos)) {
       tasks.push(
-        fetchCsv(CONFIG.gids.consolidado)
-          .then((rows) => { Data.eerr.CONSOLIDADO = parseEERR(rows); })
-          .catch((e) => Data.loadErrors.push('EERR Consolidado: ' + e.message))
+        fetchCsv(gidSueldos)
+          .then((rows) => { Data.sueldosYCS = parseSueldosPorMes(rows); })
+          .catch((e) => Data.loadErrors.push('Sueldos y CS: ' + e.message))
+      );
+    }
+
+    const hojasCrudasEntries = Object.entries(CONFIG.gids.hojasCrudas || {});
+    for (const [clave, gid] of hojasCrudasEntries) {
+      if (isPlaceholder(gid)) continue;
+      tasks.push(
+        fetchCsv(gid)
+          .then((rows) => { Data.hojasCrudas[clave] = parseHojaCruda(rows); })
+          .catch((e) => Data.loadErrors.push((NOMBRES_HOJAS_CRUDAS[clave] || clave) + ': ' + e.message))
       );
     }
 
@@ -621,10 +792,12 @@
   }
 
   function renderStatus() {
-    const nGastos = Data.gastos.length;
-    const nMesesEERR = Object.keys(Data.eerr).length;
-    const nClasif = Object.keys(Data.clasificacion).length;
-    const hayDatos = nGastos > 0 || nMesesEERR > 0 || nClasif > 0;
+    const nMovimientos = Object.values(Data.gastosPorMes).reduce((sum, arr) => sum + arr.length, 0);
+    const nMesesGastos = Object.keys(Data.gastosPorMes).length;
+    const nHojasResultados = Object.keys(Data.resultadosPorHoja).length;
+    const nTablasMensuales = Object.keys(Data.tablasMensuales).length;
+    const nHojasCrudas = Object.keys(Data.hojasCrudas).length;
+    const hayDatos = nMovimientos > 0 || nHojasResultados > 0 || nTablasMensuales > 0 || Data.sueldosYCS || nHojasCrudas > 0;
 
     if (Data.loadErrors.length > 0 && !hayDatos) {
       setStatus('error', 'Sin datos — revisar configuración');
@@ -637,9 +810,11 @@
     // El detalle completo (qué se cargó, errores por hoja) queda en el
     // tooltip del indicador de estado, en vez de mostrarse siempre en pantalla.
     const parts = [];
-    if (nGastos > 0) parts.push(nGastos + ' registros de gastos');
-    if (nMesesEERR > 0) parts.push(nMesesEERR + ' meses de EERR');
-    if (nClasif > 0) parts.push(nClasif + ' meses de clasificación fijo/variable');
+    if (nMesesGastos > 0) parts.push(nMovimientos + ' movimientos en ' + nMesesGastos + ' hojas de gastos');
+    if (nHojasResultados > 0) parts.push(nHojasResultados + ' hojas de resultados por área');
+    if (nTablasMensuales > 0) parts.push(nTablasMensuales + ' tablas mensuales de gastos');
+    if (Data.sueldosYCS) parts.push('Sueldos y CS');
+    if (nHojasCrudas > 0) parts.push(nHojasCrudas + ' hojas adicionales');
     const when = Data.lastLoaded ? Data.lastLoaded.toLocaleTimeString('es-AR') : '';
     const detail = (parts.length ? parts.join(' · ') : 'No se cargaron datos') + (when ? ' · actualizado ' + when : '') +
       (Data.loadErrors.length > 0 ? '\n' + Data.loadErrors.join('\n') : '');
@@ -647,338 +822,300 @@
   }
 
   // ============================================================
-  // Tools que Claude puede invocar
+  // Funciones de búsqueda (llamadas directo desde los formularios de la UI)
   // ============================================================
-  const TOOLS = [
-    {
-      name: 'buscar_gasto',
-      description: 'Busca en la Matriz de gastos pagos a un proveedor, con coincidencia parcial (ej. "Tanoira" matchea "TANOIRA CASSAGNE"), opcionalmente filtrado por mes y/o área. Devuelve todas las coincidencias con proveedor, concepto, área, mes y monto exactos según los datos ya cargados.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          proveedor: { type: 'string', description: 'Nombre completo o parcial del proveedor (ej: "Tanoira")' },
-          mes: { type: 'string', description: 'Mes a filtrar, ej "mayo". Si se omite, busca en todos los meses cargados.' },
-          area: { type: 'string', description: 'Área a filtrar: Mesa, Banca Corporativa, Banca Privada o FAs. Opcional.' },
-        },
-        required: ['proveedor'],
-      },
-    },
-    {
-      name: 'totales_por_area',
-      description: 'Devuelve los totales de ingresos, egresos y resultado por área (Mesa, Banca Corporativa, Banca Privada, FAs) para un mes dado, según las hojas de EERR. Si se omite el mes, devuelve todos los meses cargados para poder comparar. También existe el pseudo-mes "consolidado" (o "acumulado"/"total"), que trae los totales del período completo desde la hoja Consolidado, no de un mes puntual.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          mes: { type: 'string', description: 'Mes a consultar, ej "mayo", o "consolidado" para el acumulado del período completo. Opcional.' },
-        },
-      },
-    },
-    {
-      name: 'top_proveedores',
-      description: 'Devuelve el ranking de proveedores con mayor gasto total según la Matriz de gastos, opcionalmente filtrado por mes y/o área.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          mes: { type: 'string', description: 'Mes a filtrar. Opcional, si se omite usa todos los meses cargados.' },
-          area: { type: 'string', description: 'Área a filtrar. Opcional.' },
-          n: { type: 'integer', description: 'Cantidad de proveedores a devolver. Default 10.' },
-        },
-      },
-    },
-    {
-      name: 'gastos_fijos_variables',
-      description: 'Devuelve los totales de gastos fijos y variables para un mes, según la hoja Clasificación de gastos. Si se omite el mes, devuelve todos los meses cargados para comparar.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          mes: { type: 'string', description: 'Mes a consultar. Opcional.' },
-        },
-      },
-    },
-    {
-      name: 'meses_disponibles',
-      description: 'Devuelve qué meses hay realmente cargados en cada hoja (Matriz de gastos, EERR, Clasificación). Usar esto antes de asumir que un mes está disponible.',
-      input_schema: { type: 'object', properties: {} },
-    },
-  ];
+  function nombreHojaGastos(mm) {
+    return 'Gastos ' + mm + ',26';
+  }
 
-  function toolBuscarGasto({ proveedor, mes, area }) {
-    const mesNorm = mes ? normalizeMes(mes) : null;
-    const areaNorm = area ? normalizeArea(area) : null;
-    const matches = Data.gastos.filter((g) => {
-      if (!matchProveedor(proveedor, g.proveedor)) return false;
-      if (mesNorm && g.mes !== mesNorm) return false;
-      if (areaNorm && normalizeArea(g.area) !== areaNorm) return false;
-      return true;
-    });
-    if (matches.length === 0) {
+  function toolBuscarGasto({ query, mes }) {
+    const mm = mes ? MES_A_NUMERO[normalizeMes(mes)] : null;
+    if (mes && !mm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes reconocible.' };
+    }
+    const mms = mm ? [mm] : Object.keys(Data.gastosPorMes);
+    const resultados = [];
+    for (const m of mms) {
+      const movimientos = Data.gastosPorMes[m] || [];
+      for (const g of movimientos) {
+        if (!matchProveedor(query, g.concepto)) continue;
+        const monto = (g.debe != null && g.debe !== 0) ? g.debe : g.haber;
+        resultados.push({
+          hoja: nombreHojaGastos(m), cuenta: g.cuenta, fecha: g.fecha, concepto: g.concepto,
+          monto, monto_formateado: formatARS(monto),
+        });
+      }
+    }
+    if (resultados.length === 0) {
       return {
         encontrado: false,
-        mensaje: 'No se encontró ningún pago a un proveedor que coincida con "' + proveedor + '"' +
-          (mes ? ' en ' + mes : '') + (area ? ' en el área ' + area : '') + ' en la Matriz de gastos.',
+        mensaje: 'No se encontró ningún movimiento que coincida con "' + query + '"' +
+          (mes ? ' en la hoja ' + nombreHojaGastos(mm) : ' en ninguna hoja "Gastos MM,26" cargada') + '.',
       };
     }
-    return {
-      encontrado: true,
-      fuente: 'Matriz de gastos',
-      resultados: matches.map((g) => ({
-        proveedor: g.proveedor, concepto: g.concepto, area: g.area, mes: g.mes,
-        monto: g.monto, monto_formateado: formatARS(g.monto),
-      })),
-      total: matches.reduce((sum, g) => sum + g.monto, 0),
-      total_formateado: formatARS(matches.reduce((sum, g) => sum + g.monto, 0)),
-    };
+    const total = resultados.reduce((sum, r) => sum + (r.monto || 0), 0);
+    return { encontrado: true, resultados, total, total_formateado: formatARS(total) };
   }
 
-  function toolTotalesPorArea({ mes }) {
+  function toolBuscarResultado({ concepto, mes }) {
     const mesNorm = mes ? normalizeMes(mes) : null;
-    const mesesData = mesNorm ? [mesNorm] : Object.keys(Data.eerr);
-    const out = {};
-    for (const m of mesesData) {
-      if (Data.eerr[m]) out[m] = Data.eerr[m].porArea;
+    if (mes && !mesNorm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes ni "consolidado" reconocible.' };
     }
-    if (Object.keys(out).length === 0) {
-      return { encontrado: false, mensaje: mes ? 'No hay datos de EERR cargados para ' + mes + '.' : 'No hay datos de EERR cargados.' };
+    const claves = mesNorm ? [mesNorm] : Object.keys(Data.resultadosPorHoja);
+    const resultados = [];
+    for (const clave of claves) {
+      const hoja = Data.resultadosPorHoja[clave];
+      if (!hoja) continue;
+      for (const fila of hoja.filas) {
+        if (!matchProveedor(concepto, fila.label)) continue;
+        const valoresFormateados = {};
+        for (const [area, monto] of Object.entries(fila.values)) valoresFormateados[area] = formatARS(monto);
+        resultados.push({
+          hoja: clave === 'CONSOLIDADO' ? 'CONSOLIDADO' : clave,
+          rubro: fila.label,
+          por_area: fila.values,
+          por_area_formateado: valoresFormateados,
+          total: fila.total,
+          total_formateado: formatARS(fila.total),
+          notas: fila.notas || null,
+        });
+      }
     }
-    return { encontrado: true, fuente: 'Hojas de EERR', datos: out };
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún rubro que coincida con "' + concepto + '"' +
+          (mes ? ' en la hoja de resultados de ' + mes : ' en ninguna hoja de resultados cargada') + '.',
+      };
+    }
+    return { encontrado: true, resultados };
   }
 
-  function toolTopProveedores({ mes, area, n }) {
+  function toolBuscarRubroMensual({ query, mes }) {
     const mesNorm = mes ? normalizeMes(mes) : null;
-    const areaNorm = area ? normalizeArea(area) : null;
-    const filtered = Data.gastos.filter((g) => {
-      if (mesNorm && g.mes !== mesNorm) return false;
-      if (areaNorm && normalizeArea(g.area) !== areaNorm) return false;
-      return true;
-    });
-    const totals = {};
-    for (const g of filtered) totals[g.proveedor] = (totals[g.proveedor] || 0) + g.monto;
-    const ranking = Object.entries(totals)
-      .map(([proveedor, total]) => ({ proveedor, total, total_formateado: formatARS(total) }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, n || 10);
-    if (ranking.length === 0) {
-      return { encontrado: false, mensaje: 'No se encontraron gastos con esos filtros en la Matriz de gastos.' };
+    if (mes && !mesNorm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes reconocible.' };
     }
-    return { encontrado: true, fuente: 'Matriz de gastos', ranking };
+    const resultados = [];
+    for (const [clave, hoja] of Object.entries(Data.tablasMensuales)) {
+      if (!hoja) continue;
+      for (const fila of hoja.filas) {
+        if (!matchProveedor(query, fila.label)) continue;
+        const porMes = mesNorm ? { [mesNorm]: fila.porMes[mesNorm] } : fila.porMes;
+        const porMesFormateado = {};
+        for (const [m, monto] of Object.entries(porMes)) if (monto != null) porMesFormateado[m] = formatARS(monto);
+        if (mesNorm && fila.porMes[mesNorm] == null) continue;
+        resultados.push({
+          hoja: NOMBRES_TABLAS_MENSUALES[clave] || clave,
+          rubro: fila.label,
+          tag: fila.tag,
+          por_mes: porMes,
+          por_mes_formateado: porMesFormateado,
+        });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún rubro que coincida con "' + query + '"' +
+          (mes ? ' en ' + mes : '') + ' en las tablas mensuales de gastos (Gastos fijos, Clasificación de gastos, Capital N).',
+      };
+    }
+    return { encontrado: true, resultados };
   }
 
-  function toolGastosFijosVariables({ mes }) {
-    const mesNorm = mes ? normalizeMes(mes) : null;
-    const meses = mesNorm ? [mesNorm] : Object.keys(Data.clasificacion);
-    const out = {};
-    for (const m of meses) if (Data.clasificacion[m]) out[m] = Data.clasificacion[m];
-    if (Object.keys(out).length === 0) {
-      return { encontrado: false, mensaje: mes ? 'No hay datos de Clasificación de gastos para ' + mes + '.' : 'No hay datos de Clasificación de gastos cargados.' };
+  function toolBuscarSueldos({ departamento, mes }) {
+    if (!Data.sueldosYCS) {
+      return { encontrado: false, mensaje: 'No hay datos de la hoja "Sueldos y CS" cargados.' };
     }
-    return { encontrado: true, fuente: 'Clasificación de gastos', datos: out };
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    if (mes && !mesNorm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes reconocible.' };
+    }
+    const meses = mesNorm ? [mesNorm] : Object.keys(Data.sueldosYCS.porMes);
+    const resultados = [];
+    for (const m of meses) {
+      const filas = Data.sueldosYCS.porMes[m] || [];
+      for (const fila of filas) {
+        if (departamento && !matchProveedor(departamento, fila.departamento)) continue;
+        resultados.push({
+          mes: m,
+          departamento: fila.departamento,
+          sueldo_bruto: fila.sueldoBruto, sueldo_bruto_formateado: formatARS(fila.sueldoBruto),
+          costo_laboral: fila.costoLaboral, costo_laboral_formateado: formatARS(fila.costoLaboral),
+          plus: fila.plus, plus_formateado: formatARS(fila.plus),
+          total: fila.total, total_formateado: formatARS(fila.total),
+          porcentaje_del_total: fila.porcentaje,
+        });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún departamento que coincida' + (departamento ? ' con "' + departamento + '"' : '') +
+          (mes ? ' en ' + mes : '') + ' en la hoja "Sueldos y CS".',
+      };
+    }
+    return { encontrado: true, resultados };
+  }
+
+  function toolBuscarEnHojaCruda({ query, hoja }) {
+    const claves = hoja
+      ? Object.keys(NOMBRES_HOJAS_CRUDAS).filter((k) => matchProveedor(hoja, NOMBRES_HOJAS_CRUDAS[k]))
+      : Object.keys(Data.hojasCrudas);
+    const resultados = [];
+    for (const clave of claves) {
+      const h = Data.hojasCrudas[clave];
+      if (!h) continue;
+      for (const fila of h.filas) {
+        const texto = Object.values(fila).join(' ');
+        if (!matchProveedor(query, texto)) continue;
+        resultados.push({ hoja: NOMBRES_HOJAS_CRUDAS[clave] || clave, fila });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ninguna fila que coincida con "' + query + '"' +
+          (hoja ? ' en la hoja ' + hoja : ' en las hojas crudas cargadas (Resultados, Matriz de gastos)') + '.',
+      };
+    }
+    return { encontrado: true, resultados: resultados.slice(0, 30), total_coincidencias: resultados.length };
   }
 
   function toolMesesDisponibles() {
     return {
-      meses_con_gastos: [...new Set(Data.gastos.map((g) => g.mes))],
-      meses_con_eerr: Object.keys(Data.eerr),
-      meses_con_clasificacion: Object.keys(Data.clasificacion),
-      nota: '"CONSOLIDADO" no es un mes puntual: son los totales acumulados del período completo, según la hoja Consolidado.',
+      hojas_gastos_cargadas: Object.keys(Data.gastosPorMes).map(nombreHojaGastos),
+      hojas_resultados_cargadas: Object.keys(Data.resultadosPorHoja),
+      tablas_mensuales_cargadas: Object.keys(Data.tablasMensuales).map((k) => NOMBRES_TABLAS_MENSUALES[k] || k),
+      sueldos_y_cs_cargado: !!Data.sueldosYCS,
+      hojas_crudas_cargadas: Object.keys(Data.hojasCrudas).map((k) => NOMBRES_HOJAS_CRUDAS[k] || k),
+      nota: '"CONSOLIDADO" no es un mes puntual: son los totales acumulados del período completo, según la hoja CONSOLIDADO.',
     };
   }
 
-  function executeTool(name, input) {
-    try {
-      switch (name) {
-        case 'buscar_gasto': return toolBuscarGasto(input || {});
-        case 'totales_por_area': return toolTotalesPorArea(input || {});
-        case 'top_proveedores': return toolTopProveedores(input || {});
-        case 'gastos_fijos_variables': return toolGastosFijosVariables(input || {});
-        case 'meses_disponibles': return toolMesesDisponibles();
-        default: return { error: 'Tool desconocida: ' + name };
-      }
-    } catch (e) {
-      return { error: 'Error ejecutando la tool: ' + e.message };
-    }
-  }
-
   // ============================================================
-  // Chat: system prompt, historial, loop de tool-use
+  // UI: tabs + formularios + render de resultados (sin LLM ni backend)
   // ============================================================
-  const SYSTEM_PROMPT = [
-    'Sos el asistente financiero interno de Neix S.A.',
-    'Tu única fuente de verdad son los resultados que devuelven las tools disponibles (buscar_gasto, totales_por_area, top_proveedores, gastos_fijos_variables, meses_disponibles). Esas tools consultan datos reales, ya cargados en el navegador desde los Google Sheets de Neix (Matriz de gastos, Clasificación de gastos, hojas mensuales de EERR).',
-    'Nunca inventes ni estimes montos, proveedores, meses o áreas. Si una tool devuelve encontrado:false o no tenés datos suficientes, decilo explícitamente (por ejemplo: "No encontré ese dato en la Matriz de gastos") en vez de aproximar o suponer.',
-    'Cuando respondas con un monto, indicá siempre: el monto exacto en pesos, el mes correspondiente y la fuente (nombre de la hoja) de donde proviene el dato. Ejemplo: "En mayo se le pagó $1.234.567 a Tanoira Cassagne, según la Matriz de gastos."',
-    'Si hay varias coincidencias parciales para un proveedor, mostralas todas y aclará que son coincidencias parciales, no asumas cuál es la correcta.',
-    'Si el usuario pregunta por un mes que no está cargado, usá meses_disponibles para confirmarlo y avisale cuáles meses sí están disponibles.',
-    '"CONSOLIDADO" es un pseudo-mes especial (también aceptás "acumulado" o "total") que representa los totales de EERR del período completo cargado hasta el momento, según la hoja Consolidado — no confundirlo con un mes puntual.',
-    'Sé conciso, directo y profesional. No agregues disclaimers innecesarios ni inventes contexto que no te dieron.',
-  ].join(' ');
+  function humanKey(k) {
+    return k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ');
+  }
 
-  const HISTORY_KEY = 'neix-gastos-chat-history';
-  let conversation = loadHistory();
-
-  function loadHistory() {
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
+  function renderValue(v) {
+    if (v == null || v === '') return '—';
+    if (typeof v === 'object') {
+      const entries = Object.entries(v);
+      if (entries.length === 0) return '—';
+      return entries.map(([k, val]) => humanKey(k) + ': ' + (val == null ? '—' : val)).join(' · ');
     }
+    return String(v);
   }
 
-  function saveHistory() {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(conversation)); } catch (e) { /* ignore */ }
+  // Arma una card por resultado. Si existe "campo_formateado" junto a
+  // "campo", se muestra solo el formateado (evita duplicar el mismo monto
+  // en crudo y en formato $ AR).
+  function renderResultCard(obj) {
+    const skip = new Set();
+    for (const k of Object.keys(obj)) {
+      if (k.endsWith('_formateado')) skip.add(k.slice(0, -'_formateado'.length));
+    }
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    for (const [k, v] of Object.entries(obj)) {
+      if (skip.has(k)) continue;
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      const label = document.createElement('span');
+      label.className = 'result-label';
+      const labelKey = k.endsWith('_formateado') ? k.slice(0, -'_formateado'.length) : k;
+      label.textContent = humanKey(labelKey) + ':';
+      const val = document.createElement('span');
+      val.className = 'result-value';
+      val.textContent = renderValue(v);
+      row.appendChild(label);
+      row.appendChild(val);
+      card.appendChild(row);
+    }
+    return card;
   }
 
-  const chatMain = document.getElementById('chat-main');
-  const emptyState = document.getElementById('empty-state');
-  const chatInput = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('send-btn');
-
-  function extractText(content) {
-    if (typeof content === 'string') return content;
-    if (!Array.isArray(content)) return '';
-    return content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
-  }
-
-  function renderConversation() {
-    chatMain.innerHTML = '';
-    const visible = conversation.filter((m) => m.role === 'user' || m.role === 'assistant');
-    if (visible.length === 0) {
-      chatMain.appendChild(emptyState);
+  function mostrarResultados(containerId, resultado) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (!resultado.encontrado && resultado.encontrado !== undefined) {
+      const p = document.createElement('p');
+      p.className = 'no-result';
+      p.textContent = resultado.mensaje || 'No se encontró nada.';
+      container.appendChild(p);
       return;
     }
-    for (const m of visible) {
-      const text = extractText(m.content);
-      if (!text.trim()) continue;
-      appendBubble(m.role, text, false);
+    const lista = resultado.resultados || [resultado];
+    for (const r of lista) container.appendChild(renderResultCard(r));
+    if (resultado.total_formateado != null) {
+      const totalEl = document.createElement('div');
+      totalEl.className = 'result-total';
+      totalEl.textContent = 'Total: ' + resultado.total_formateado;
+      container.appendChild(totalEl);
     }
-    chatMain.scrollTop = chatMain.scrollHeight;
-  }
-
-  function appendBubble(role, text, isError) {
-    const row = document.createElement('div');
-    row.className = 'msg-row ' + role;
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble' + (isError ? ' error' : '');
-    bubble.textContent = text;
-    row.appendChild(bubble);
-    chatMain.appendChild(row);
-    chatMain.scrollTop = chatMain.scrollHeight;
-    return row;
-  }
-
-  function appendThinking() {
-    const row = document.createElement('div');
-    row.className = 'msg-row assistant';
-    row.id = 'thinking-row';
-    row.innerHTML = '<div class="bubble thinking-bubble"><span class="thinking-dots"><span></span><span></span><span></span></span>Consultando datos…</div>';
-    chatMain.appendChild(row);
-    chatMain.scrollTop = chatMain.scrollHeight;
-  }
-
-  function removeThinking() {
-    const el = document.getElementById('thinking-row');
-    if (el) el.remove();
-  }
-
-  async function callClaude(messages) {
-    const res = await fetch(CONFIG.apiEndpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ system: SYSTEM_PROMPT, messages, tools: TOOLS, model: CONFIG.model }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      const detail = (data && (data.error && data.error.message || data.error)) || ('HTTP ' + res.status);
-      throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    if (resultado.total_coincidencias != null && resultado.total_coincidencias > lista.length) {
+      const note = document.createElement('div');
+      note.className = 'result-note';
+      note.textContent = 'Mostrando ' + lista.length + ' de ' + resultado.total_coincidencias + ' coincidencias.';
+      container.appendChild(note);
     }
-    return data;
   }
 
-  const MAX_TOOL_ROUNDS = 6;
-
-  async function runTurn() {
-    appendThinking();
-    try {
-      let rounds = 0;
-      let response = await callClaude(conversation);
-
-      while (response.stop_reason === 'tool_use' && rounds < MAX_TOOL_ROUNDS) {
-        rounds++;
-        conversation.push({ role: 'assistant', content: response.content });
-
-        const toolResults = [];
-        for (const block of response.content) {
-          if (block.type === 'tool_use') {
-            const result = executeTool(block.name, block.input);
-            toolResults.push({
-              type: 'tool_result',
-              tool_use_id: block.id,
-              content: JSON.stringify(result),
-            });
-          }
-        }
-        conversation.push({ role: 'user', content: toolResults });
-        saveHistory();
-        response = await callClaude(conversation);
+  // ---- Tabs ----
+  document.querySelectorAll('#tabs .tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+      if (tab.dataset.tab === 'meses') {
+        mostrarResultados('resultados-meses', toolMesesDisponibles());
       }
-
-      conversation.push({ role: 'assistant', content: response.content });
-      saveHistory();
-      removeThinking();
-      const text = extractText(response.content) || '(sin respuesta de texto)';
-      appendBubble('assistant', text, false);
-    } catch (err) {
-      removeThinking();
-      appendBubble('assistant', 'Ocurrió un error al consultar al asistente: ' + err.message, true);
-    }
-  }
-
-  function sendMessage(text) {
-    if (!text.trim()) return;
-    conversation.push({ role: 'user', content: text.trim() });
-    saveHistory();
-    if (chatMain.contains(emptyState)) emptyState.remove();
-    appendBubble('user', text.trim(), false);
-    chatInput.value = '';
-    chatInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    chatInput.disabled = true;
-    runTurn().finally(() => {
-      sendBtn.disabled = false;
-      chatInput.disabled = false;
-      chatInput.focus();
     });
-  }
-
-  sendBtn.addEventListener('click', () => sendMessage(chatInput.value));
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(chatInput.value);
-    }
-  });
-  chatInput.addEventListener('input', () => {
-    chatInput.style.height = 'auto';
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
   });
 
-  document.getElementById('clear-btn').addEventListener('click', () => {
-    if (!confirm('¿Borrar todo el historial de la conversación?')) return;
-    conversation = [];
-    saveHistory();
-    renderConversation();
+  // ---- Formularios ----
+  document.getElementById('form-gastos').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('gastos-query').value.trim();
+    const mes = document.getElementById('gastos-mes').value;
+    mostrarResultados('resultados-gastos', toolBuscarGasto({ query, mes: mes || undefined }));
   });
 
-  document.querySelectorAll('.empty-state .examples span').forEach((el) => {
-    el.addEventListener('click', () => sendMessage(el.getAttribute('data-example')));
+  document.getElementById('form-resultados').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const concepto = document.getElementById('resultados-query').value.trim();
+    const mes = document.getElementById('resultados-mes').value;
+    mostrarResultados('resultados-resultados', toolBuscarResultado({ concepto, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-rubros').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('rubros-query').value.trim();
+    const mes = document.getElementById('rubros-mes').value;
+    mostrarResultados('resultados-rubros', toolBuscarRubroMensual({ query, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-sueldos').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const departamento = document.getElementById('sueldos-departamento').value.trim();
+    const mes = document.getElementById('sueldos-mes').value;
+    mostrarResultados('resultados-sueldos', toolBuscarSueldos({ departamento: departamento || undefined, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-cruda').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('cruda-query').value.trim();
+    const hoja = document.getElementById('cruda-hoja').value;
+    mostrarResultados('resultados-cruda', toolBuscarEnHojaCruda({ query, hoja: hoja || undefined }));
   });
 
   // ============================================================
   // Init
   // ============================================================
-  renderConversation();
   loadAllData();
 })();
 </script>
