@@ -4,15 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Asistente de Gastos · Neix S.A.</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%233D3D3D'/%3E%3Cpolygon points='40,14 54,14 40,32 26,32' fill='%23AB1930'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
   :root {
     --dark: #3D3D3D;
     --red: #AB1930;
     --bg: #F7F5F3;
+    --line: #E4E4E4;
     --muted: #9A8E7D;
     --white: #FFFFFF;
   }
@@ -37,22 +39,45 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 16px 24px;
-    background: var(--white);
-    border-bottom: 1px solid #E7E2DA;
+    gap: 16px;
+    padding: 14px 24px;
+    background: var(--dark);
     flex-wrap: wrap;
   }
-  header .titles h1 {
-    margin: 0;
-    font-size: 18px;
+  header .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header .logo {
+    height: 30px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  header .logo .logo-text {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    letter-spacing: 6px;
+    fill: var(--white);
+  }
+  header .logo .logo-accent { fill: var(--red); }
+  header .divider {
+    width: 1px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.18);
+    flex-shrink: 0;
+  }
+  header .titles .app-name {
+    display: block;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--dark);
+    color: var(--white);
   }
   header .titles p {
     margin: 2px 0 0;
     font-size: 12px;
-    color: var(--muted);
+    color: rgba(228, 228, 228, 0.75);
     font-family: 'DM Mono', monospace;
   }
   .status-area {
@@ -61,7 +86,7 @@
     gap: 10px;
     font-size: 12px;
     font-family: 'DM Mono', monospace;
-    color: var(--muted);
+    color: rgba(228, 228, 228, 0.85);
   }
   .status-dot {
     width: 8px;
@@ -70,21 +95,21 @@
     background: var(--muted);
     flex-shrink: 0;
   }
-  .status-dot.ok { background: #4C7A4C; }
-  .status-dot.error { background: var(--red); }
-  .status-dot.loading { background: #C9A227; animation: pulse 1s infinite; }
+  .status-dot.ok { background: #6FBF73; }
+  .status-dot.error { background: #E85C6B; }
+  .status-dot.loading { background: #E3B341; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
   button.refresh-btn {
-    border: 1px solid var(--muted);
+    border: 1px solid rgba(228, 228, 228, 0.4);
     background: transparent;
-    color: var(--dark);
+    color: var(--white);
     border-radius: 6px;
     padding: 6px 10px;
     font-family: 'DM Sans', sans-serif;
     font-size: 12px;
     cursor: pointer;
   }
-  button.refresh-btn:hover { background: #EFEAE1; }
+  button.refresh-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(228, 228, 228, 0.7); }
   button.refresh-btn:disabled { opacity: .5; cursor: default; }
 
   main {
@@ -115,7 +140,7 @@
   }
   .empty-state .examples span {
     background: var(--white);
-    border: 1px solid #E7E2DA;
+    border: 1px solid var(--line);
     border-radius: 8px;
     padding: 8px 12px;
     cursor: pointer;
@@ -142,7 +167,7 @@
   }
   .msg-row.assistant .bubble {
     background: var(--white);
-    border: 1px solid #E7E2DA;
+    border: 1px solid var(--line);
     color: var(--dark);
     border-radius: 12px 12px 12px 2px;
   }
@@ -174,7 +199,7 @@
   footer {
     padding: 12px 24px 20px;
     background: var(--bg);
-    border-top: 1px solid #E7E2DA;
+    border-top: 1px solid var(--line);
   }
   .input-row {
     display: flex;
@@ -185,7 +210,7 @@
   textarea#chat-input {
     flex: 1;
     resize: none;
-    border: 1px solid #D8D2C6;
+    border: 1px solid var(--line);
     border-radius: 10px;
     padding: 12px 14px;
     font-family: 'DM Sans', sans-serif;
@@ -227,15 +252,22 @@
   }
 
   main::-webkit-scrollbar { width: 8px; }
-  main::-webkit-scrollbar-thumb { background: #D8D2C6; border-radius: 4px; }
+  main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="titles">
-    <h1>Asistente de Gastos — Neix S.A.</h1>
-    <p id="data-summary">Cargando datos…</p>
+  <div class="brand">
+    <svg class="logo" viewBox="0 -3 145 49" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neix">
+      <text x="0" y="35" class="logo-text">NEIX</text>
+      <polygon class="logo-accent" points="122,-2 137,-2 130,16 115,16"></polygon>
+    </svg>
+    <div class="divider"></div>
+    <div class="titles">
+      <span class="app-name">Asistente de Gastos</span>
+      <p id="data-summary">Cargando datos…</p>
+    </div>
   </div>
   <div class="status-area">
     <span class="status-dot loading" id="status-dot"></span>
