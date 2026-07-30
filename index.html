@@ -334,7 +334,8 @@
       },
     },
     apiEndpoint: '/api/chat',
-    model: 'claude-sonnet-5',
+    // Google Gemini (gratis vía Google AI Studio, sin tarjeta) en vez de Claude.
+    model: 'gemini-2.5-flash',
   };
 
   const PLACEHOLDER_MARKERS = ['REEMPLAZAR', 'TU_ID_PUBLICADO'];
@@ -758,7 +759,7 @@
   }
 
   // ============================================================
-  // Tools que Claude puede invocar
+  // Tools que el modelo puede invocar
   // ============================================================
   const TOOLS = [
     {
@@ -1030,7 +1031,18 @@
     'Respondé en español rioplatense, directo y sin vueltas.',
   ].join(' ');
 
-  const HISTORY_KEY = 'neix-gastos-chat-history';
+  // Declaración de las tools en formato Gemini (functionDeclarations). El
+  // "parameters" de cada una es el mismo JSON Schema que ya usábamos en
+  // input_schema — Gemini lo acepta tal cual.
+  const GEMINI_TOOLS = [{
+    functionDeclarations: TOOLS.map((t) => ({ name: t.name, description: t.description, parameters: t.input_schema })),
+  }];
+
+  // v2 porque el formato de conversación cambió de bloques estilo Anthropic
+  // (role assistant/user, content: [...]) a bloques estilo Gemini (role
+  // model/user, parts: [...]) — un historial viejo en localStorage rompería
+  // el render con el formato nuevo.
+  const HISTORY_KEY = 'neix-gastos-chat-history-v2';
   let conversation = loadHistory();
 
   function loadHistory() {
@@ -1053,23 +1065,28 @@
   const chatInput = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-btn');
 
-  function extractText(content) {
-    if (typeof content === 'string') return content;
-    if (!Array.isArray(content)) return '';
-    return content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+  function extractText(parts) {
+    if (typeof parts === 'string') return parts;
+    if (!Array.isArray(parts)) return '';
+    return parts.filter((p) => typeof p.text === 'string').map((p) => p.text).join('\n');
+  }
+
+  function getFunctionCalls(parts) {
+    if (!Array.isArray(parts)) return [];
+    return parts.filter((p) => p.functionCall).map((p) => p.functionCall);
   }
 
   function renderConversation() {
     chatMain.innerHTML = '';
-    const visible = conversation.filter((m) => m.role === 'user' || m.role === 'assistant');
+    const visible = conversation.filter((m) => m.role === 'user' || m.role === 'model');
     if (visible.length === 0) {
       chatMain.appendChild(emptyState);
       return;
     }
     for (const m of visible) {
-      const text = extractText(m.content);
+      const text = extractText(m.parts);
       if (!text.trim()) continue;
-      appendBubble(m.role, text, false);
+      appendBubble(m.role === 'model' ? 'assistant' : 'user', text, false);
     }
     chatMain.scrollTop = chatMain.scrollHeight;
   }
@@ -1100,18 +1117,23 @@
     if (el) el.remove();
   }
 
-  async function callClaude(messages) {
+  async function callGemini(contents) {
     const res = await fetch(CONFIG.apiEndpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ system: SYSTEM_PROMPT, messages, tools: TOOLS, model: CONFIG.model }),
+      body: JSON.stringify({ systemInstruction: SYSTEM_PROMPT, contents, tools: GEMINI_TOOLS, model: CONFIG.model }),
     });
     const data = await res.json();
     if (!res.ok) {
       const detail = (data && (data.error && data.error.message || data.error)) || ('HTTP ' + res.status);
       throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
     }
-    return data;
+    const candidate = data.candidates && data.candidates[0];
+    if (!candidate) {
+      const blockReason = data.promptFeedback && data.promptFeedback.blockReason;
+      throw new Error(blockReason ? 'Gemini bloqueó la respuesta (' + blockReason + ')' : 'Gemini no devolvió ninguna respuesta.');
+    }
+    return candidate.content.parts || [];
   }
 
   const MAX_TOOL_ROUNDS = 6;
@@ -1120,32 +1142,27 @@
     appendThinking();
     try {
       let rounds = 0;
-      let response = await callClaude(conversation);
+      let parts = await callGemini(conversation);
+      let calls = getFunctionCalls(parts);
 
-      while (response.stop_reason === 'tool_use' && rounds < MAX_TOOL_ROUNDS) {
+      while (calls.length > 0 && rounds < MAX_TOOL_ROUNDS) {
         rounds++;
-        conversation.push({ role: 'assistant', content: response.content });
+        conversation.push({ role: 'model', parts });
 
-        const toolResults = [];
-        for (const block of response.content) {
-          if (block.type === 'tool_use') {
-            const result = executeTool(block.name, block.input);
-            toolResults.push({
-              type: 'tool_result',
-              tool_use_id: block.id,
-              content: JSON.stringify(result),
-            });
-          }
-        }
-        conversation.push({ role: 'user', content: toolResults });
+        const responseParts = calls.map((call) => ({
+          functionResponse: { name: call.name, response: executeTool(call.name, call.args) },
+        }));
+        conversation.push({ role: 'user', parts: responseParts });
         saveHistory();
-        response = await callClaude(conversation);
+
+        parts = await callGemini(conversation);
+        calls = getFunctionCalls(parts);
       }
 
-      conversation.push({ role: 'assistant', content: response.content });
+      conversation.push({ role: 'model', parts });
       saveHistory();
       removeThinking();
-      const text = extractText(response.content) || '(sin respuesta de texto)';
+      const text = extractText(parts) || '(sin respuesta de texto)';
       appendBubble('assistant', text, false);
     } catch (err) {
       removeThinking();
@@ -1155,7 +1172,7 @@
 
   function sendMessage(text) {
     if (!text.trim()) return;
-    conversation.push({ role: 'user', content: text.trim() });
+    conversation.push({ role: 'user', parts: [{ text: text.trim() }] });
     saveHistory();
     if (chatMain.contains(emptyState)) emptyState.remove();
     appendBubble('user', text.trim(), false);

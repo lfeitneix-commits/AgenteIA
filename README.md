@@ -1,12 +1,12 @@
 # Asistente de Gastos — Neix S.A.
 
-Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Usa la API de Claude con tool use: el modelo interpreta la pregunta e invoca funciones que corren en el navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
+Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Usa la API de **Google Gemini** (gratis vía Google AI Studio, sin tarjeta) con function calling: el modelo interpreta la pregunta e invoca funciones que corren en el navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
 
 ## Estructura
 
 ```
 index.html      → interfaz de chat completa (HTML+CSS+JS, un solo archivo)
-api/chat.js      → función serverless de Vercel que hace de proxy a la API de Claude
+api/chat.js      → función serverless de Vercel que hace de proxy a la API de Gemini
                    (guarda la API key del lado del servidor, nunca en el browser)
 ```
 
@@ -51,7 +51,7 @@ const CONFIG = {
     hojasCrudas: { resultados: '1908736161', matrizGastos: '44234235' },
   },
   apiEndpoint: '/api/chat',
-  model: 'claude-sonnet-5',
+  model: 'gemini-2.5-flash',
 };
 ```
 
@@ -73,14 +73,20 @@ Los parsers dentro de `index.html` son adaptativos (detectan encabezados por nom
 
 Si la estructura real de alguna pestaña difiere de esto, estas funciones son las únicas que dependen del layout exacto del sheet.
 
-## 3. Configurar la API key de Claude
+## 3. Conseguir una API key de Gemini (gratis)
 
-El navegador **nunca** llama directo a `api.anthropic.com` — llama a `/api/chat`, que corre en el servidor de Vercel y ahí sí usa la key. Esto evita exponer la API key en el código fuente que cualquiera puede ver en el navegador.
+1. Entrar a **[aistudio.google.com](https://aistudio.google.com)** con una cuenta de Google.
+2. **Get API key → Create API key**. No pide tarjeta para el tier gratuito.
+3. Copiar la key (algo como `AIzaSy...`).
+
+El tier gratuito tiene límites de requests por minuto/día (varían según el modelo); para el uso esporádico de un chatbot interno debería alcanzar sin problema. Si en algún momento se necesita más volumen, se puede habilitar facturación en el mismo proyecto de Google Cloud sin cambiar nada del código.
+
+El navegador **nunca** llama directo a `generativelanguage.googleapis.com` — llama a `/api/chat`, que corre en el servidor de Vercel y ahí sí usa la key. Esto evita exponer la API key en el código fuente que cualquiera puede ver en el navegador.
 
 En Vercel: **Project Settings → Environment Variables** → agregar:
 
 ```
-ANTHROPIC_API_KEY = sk-ant-...
+GEMINI_API_KEY = AIzaSy...
 ```
 
 Redeployar después de agregarla.
@@ -89,7 +95,7 @@ Redeployar después de agregarla.
 
 Igual que tus otros proyectos: conectar el repo a Vercel (o `vercel --prod` desde la CLI). No hace falta configuración adicional — Vercel detecta automáticamente `index.html` como estático y `api/chat.js` como función serverless.
 
-Para probar en local con `vercel dev` (requiere `vercel login` y tener `ANTHROPIC_API_KEY` en un `.env.local`):
+Para probar en local con `vercel dev` (requiere `vercel login` y tener `GEMINI_API_KEY` en un `.env.local`):
 
 ```bash
 npm i -g vercel
@@ -99,10 +105,12 @@ vercel dev
 ## Cómo funciona
 
 1. Al cargar la página, `index.html` hace fetch de cada CSV publicado y los parsea con PapaParse (vía CDN) en memoria — no hay backend de datos, todo vive en el navegador de cada sesión.
-2. El usuario escribe una pregunta. El frontend manda el historial de la conversación + la lista de tools a `/api/chat`.
-3. `/api/chat` reenvía la llamada a `api.anthropic.com/v1/messages` con el modelo `claude-sonnet-5`, agregando la API key del servidor.
-4. Si Claude decide invocar una tool (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles`), la función correspondiente corre **en el navegador** contra los datos ya cargados, y el resultado se le manda de vuelta a Claude como `tool_result`.
-5. Este loop se repite hasta que Claude responde con texto final, que se muestra en el chat.
-6. El historial de la conversación se guarda en `localStorage` del navegador (sin login, uso personal).
+2. El usuario escribe una pregunta. El frontend manda el historial de la conversación (formato Gemini: `contents` con `role: 'user'|'model'` y `parts`) + la lista de tools (`functionDeclarations`) a `/api/chat`.
+3. `/api/chat` reenvía la llamada a `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` con el modelo `gemini-2.5-flash`, agregando la API key del servidor vía el header `x-goog-api-key`.
+4. Si Gemini decide invocar una tool (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles` — le llegan como `functionCall` dentro de la respuesta), la función correspondiente corre **en el navegador** contra los datos ya cargados, y el resultado se le manda de vuelta a Gemini como una parte `functionResponse`.
+5. Este loop se repite hasta que Gemini responde con texto final, que se muestra en el chat.
+6. El historial de la conversación se guarda en `localStorage` del navegador (sin login, uso personal) bajo la clave `neix-gastos-chat-history-v2`.
 
-El system prompt le exige a Claude que solo responda con datos verificables por las tools, que use la tool más específica para cada tipo de consulta (y `buscar_en_hoja_cruda` solo como último recurso), que cite siempre la hoja y el mes de cada dato, y que diga explícitamente cuando no encuentra algo, en vez de inventar montos.
+El system prompt le exige al modelo que solo responda con datos verificables por las tools, que use la tool más específica para cada tipo de consulta (y `buscar_en_hoja_cruda` solo como último recurso), que cite siempre la hoja y el mes de cada dato, y que diga explícitamente cuando no encuentra algo, en vez de inventar montos.
+
+**Nota:** el cambio de Claude a Gemini se hizo sin poder probar contra la API real de Gemini (este entorno no tiene salida de red hacia `generativelanguage.googleapis.com`) — se verificó el formato de la request/response y el loop de tool-use con mocks que imitan la forma documentada de la API (`contents`/`parts`/`functionCall`/`functionResponse`, `tools: [{functionDeclarations: [...]}]`), pero conviene probar una pregunta simple apenas esté la key configurada y revisar la consola del navegador si algo no responde bien.
