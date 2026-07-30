@@ -62,17 +62,10 @@
     background: rgba(255, 255, 255, 0.18);
     flex-shrink: 0;
   }
-  header .titles .app-name {
-    display: block;
+  header .app-name {
     font-size: 15px;
     font-weight: 700;
     color: var(--white);
-  }
-  header .titles p {
-    margin: 2px 0 0;
-    font-size: 12px;
-    color: rgba(228, 228, 228, 0.75);
-    font-family: 'DM Mono', monospace;
   }
   .status-area {
     display: flex;
@@ -93,18 +86,6 @@
   .status-dot.error { background: #E85C6B; }
   .status-dot.loading { background: #E3B341; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-  button.refresh-btn {
-    border: 1px solid rgba(228, 228, 228, 0.4);
-    background: transparent;
-    color: var(--white);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  button.refresh-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(228, 228, 228, 0.7); }
-  button.refresh-btn:disabled { opacity: .5; cursor: default; }
 
   main {
     flex: 1;
@@ -261,15 +242,11 @@
       <polygon class="logo-mark" points="989.85 293.87 846.31 78.2 801.42 78.2 869.57 180.59 794.17 293.87 839.05 293.87 892.01 214.31 944.97 293.87 989.85 293.87"/>
     </svg>
     <div class="divider"></div>
-    <div class="titles">
-      <span class="app-name">Asistente de Gastos</span>
-      <p id="data-summary">Cargando datos…</p>
-    </div>
+    <span class="app-name">Asistente de Gastos</span>
   </div>
-  <div class="status-area">
+  <div class="status-area" id="status-area">
     <span class="status-dot loading" id="status-dot"></span>
     <span id="status-text">Cargando…</span>
-    <button class="refresh-btn" id="refresh-btn" title="Volver a cargar los datos desde Google Sheets">Actualizar datos</button>
   </div>
 </header>
 
@@ -657,16 +634,16 @@
       setStatus('ok', 'Datos actualizados');
     }
 
-    const summary = document.getElementById('data-summary');
+    // El detalle completo (qué se cargó, errores por hoja) queda en el
+    // tooltip del indicador de estado, en vez de mostrarse siempre en pantalla.
     const parts = [];
     if (nGastos > 0) parts.push(nGastos + ' registros de gastos');
     if (nMesesEERR > 0) parts.push(nMesesEERR + ' meses de EERR');
     if (nClasif > 0) parts.push(nClasif + ' meses de clasificación fijo/variable');
     const when = Data.lastLoaded ? Data.lastLoaded.toLocaleTimeString('es-AR') : '';
-    summary.textContent = (parts.length ? parts.join(' · ') : 'No se cargaron datos') + (when ? ' · actualizado ' + when : '');
-    if (Data.loadErrors.length > 0) {
-      summary.title = Data.loadErrors.join('\n');
-    }
+    const detail = (parts.length ? parts.join(' · ') : 'No se cargaron datos') + (when ? ' · actualizado ' + when : '') +
+      (Data.loadErrors.length > 0 ? '\n' + Data.loadErrors.join('\n') : '');
+    document.getElementById('status-area').title = detail;
   }
 
   // ============================================================
@@ -992,12 +969,6 @@
     conversation = [];
     saveHistory();
     renderConversation();
-  });
-
-  document.getElementById('refresh-btn').addEventListener('click', async (e) => {
-    e.target.disabled = true;
-    await loadAllData();
-    e.target.disabled = false;
   });
 
   document.querySelectorAll('.empty-state .examples span').forEach((el) => {
