@@ -278,45 +278,59 @@
   'use strict';
 
   // ============================================================
-  // CONFIG — completar antes de deployar
+  // CONFIG — gids reales de "Resultados por área 2026"
   // ============================================================
-  // Fuente de datos: el Google Sheet "Resultados por área 2026", con dos
-  // familias de hojas:
-  //   - "Gastos MM,26" (una por mes, ej. "Gastos 05,26"): mayor contable con
-  //     columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO.
-  //   - Hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa,
-  //     Banca Privada, Middle Office/FAs, Cap N), una por mes más la hoja
-  //     CONSOLIDADO con el acumulado del período.
-  // 1. En Google Sheets: Archivo > Compartir > Publicar en la Web > elegir la
-  //    hoja > formato CSV > Publicar. Repetir por cada pestaña que se quiera
-  //    usar.
-  // 2. Copiar la URL publicada. Tiene esta forma:
-  //    https://docs.google.com/spreadsheets/d/e/<ID_LARGO>/pub?gid=<GID>&single=true&output=csv
-  //    Reemplazar el <GID> por el literal "{GID}" en csvUrlTemplate de abajo.
-  // 3. Completar el gid real de cada pestaña abajo (click en la pestaña en
-  //    Google Sheets y mirar el "gid=" en la URL del navegador).
+  // Familias de hojas del archivo:
+  //   - "Gastos MM,26" (una por mes): mayor contable con columnas CUENTA,
+  //     FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO.
+  //   - Resultados/rentabilidad por área (una por mes + CONSOLIDADO): una
+  //     fila por rubro (facturación, gastos directos/indirectos, etc.) y una
+  //     columna por área (Mesa, Banca Corporativa, Banca Privada, Middle
+  //     Office/FAs, Cap N).
+  //   - Tablas mensuales de gastos (Gastos fijos, Clasificación de gastos,
+  //     Capital N): una fila por rubro/proveedor y una columna por mes.
+  //   - Sueldos y CS: un mini-bloque por mes con sueldo bruto/costo
+  //     laboral/plus/total por departamento.
+  //   - Hojas "crudas" (Resultados, Matriz de gastos): estructura no
+  //     verificada en detalle — se cargan como grilla genérica (encabezado +
+  //     filas) para poder buscar por texto sin forzar un parseo específico.
+  // Para agregar un mes nuevo: Archivo > Compartir > Publicar en la Web >
+  // elegir la pestaña > CSV > Publicar, y copiar el gid de la URL publicada.
   const CONFIG = {
     csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?gid={GID}&single=true&output=csv',
     gids: {
       // Hojas "Gastos MM,26" — mayor contable detallado, una por mes.
       gastos: {
-        '01': 'REEMPLAZAR_GID_GASTOS_01_26',
-        '02': 'REEMPLAZAR_GID_GASTOS_02_26',
-        '03': 'REEMPLAZAR_GID_GASTOS_03_26',
-        '04': 'REEMPLAZAR_GID_GASTOS_04_26',
-        '05': 'REEMPLAZAR_GID_GASTOS_05_26',
-        '06': 'REEMPLAZAR_GID_GASTOS_06_26',
+        '01': '504407038',
+        '02': '1383245355',
+        '03': '460907963',
+        '04': '617795229',
+        '05': '1112341850',
       },
       // Hojas de resultados/rentabilidad por área, una por mes. "consolidado"
       // es la hoja con el acumulado del período completo (no es un mes
       // puntual) — se expone como el pseudo-mes especial "CONSOLIDADO".
       resultados: {
-        consolidado: 'REEMPLAZAR_GID_CONSOLIDADO',
-        enero: 'REEMPLAZAR_GID_RESULTADOS_ENERO',
-        febrero: 'REEMPLAZAR_GID_RESULTADOS_FEBRERO',
-        marzo: 'REEMPLAZAR_GID_RESULTADOS_MARZO',
-        abril: 'REEMPLAZAR_GID_RESULTADOS_ABRIL',
-        mayo: 'REEMPLAZAR_GID_RESULTADOS_MAYO',
+        consolidado: '820949426',
+        enero: '226754153',
+        febrero: '1511706532',
+        marzo: '1921579671',
+        abril: '921185054',
+        mayo: '1385764727',
+      },
+      // Tablas mensuales de gastos: label + una columna por mes (Enero..Mayo).
+      tablasMensuales: {
+        gastosFijos: '1167018877',
+        clasificacionGastos: '2122908998',
+        capitalN: '314640513',
+      },
+      // Sueldos y CS: bloques repetidos por mes (Enero..Mayo) con
+      // departamento, sueldo bruto, costo laboral, plus, total y %.
+      sueldosYCS: '987036881',
+      // Hojas de estructura no verificada: se cargan como grilla genérica.
+      hojasCrudas: {
+        resultados: '1908736161',
+        matrizGastos: '44234235',
       },
     },
     apiEndpoint: '/api/chat',
@@ -525,12 +539,95 @@
     return { filas, areaCols: areaCols.map((c) => c.area), rawGrid: rows };
   }
 
+  // Tablas mensuales de gastos (Gastos fijos, Clasificación de gastos,
+  // Capital N): una fila por rubro/proveedor, columna 0 = label, columnas
+  // siguientes = meses (Enero..Mayo). En "Clasificación de gastos" hay
+  // además una columna intermedia con la etiqueta Fijo/Variable, que se
+  // guarda en "tag".
+  function parseTablaMensual(rows) {
+    let headerRowIdx = -1;
+    let monthCols = [];
+    for (let i = 0; i < Math.min(rows.length, 8); i++) {
+      const header = (rows[i] || []).map(normalizeText);
+      const cols = [];
+      header.forEach((h, idx) => { const mes = normalizeMes(h); if (mes) cols.push({ idx, mes }); });
+      if (cols.length >= 2) { headerRowIdx = i; monthCols = cols; break; }
+    }
+    if (headerRowIdx === -1) return { filas: [], rawGrid: rows };
+    const firstMonthIdx = Math.min(...monthCols.map((c) => c.idx));
+
+    const filas = [];
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const label = (row[0] || '').toString().trim();
+      if (!label) continue;
+      const tag = row.slice(1, firstMonthIdx).map((c) => (c || '').toString().trim()).filter(Boolean).join(' ') || null;
+      const porMes = {};
+      for (const { idx, mes } of monthCols) {
+        const val = parseMonto(row[idx]);
+        if (val != null) porMes[mes] = val;
+      }
+      if (Object.keys(porMes).length === 0) continue;
+      filas.push({ label, tag, porMes });
+    }
+    return { filas, rawGrid: rows };
+  }
+
+  // Hoja "Sueldos y CS": un mini-bloque por mes. Cada bloque arranca con una
+  // fila "<MES> | SUELDO BRUTO | COSTO LABORAL | PLUS | TOTAL | %" y le
+  // siguen filas de departamento hasta la fila en blanco / próximo mes.
+  function parseSueldosPorMes(rows) {
+    const porMes = {};
+    let mesActual = null;
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const c0 = normalizeText(row[0]);
+      if (MESES.includes(c0) && normalizeText(row[1]).includes('SUELDO')) {
+        mesActual = c0;
+        porMes[mesActual] = [];
+        continue;
+      }
+      if (!mesActual) continue;
+      const departamento = (row[0] || '').toString().trim();
+      if (!departamento) continue;
+      const sueldoBruto = parseMonto(row[1]);
+      const costoLaboral = parseMonto(row[2]);
+      const plus = parseMonto(row[3]);
+      const total = parseMonto(row[4]);
+      const porcentaje = (row[5] || '').toString().trim() || null;
+      if (sueldoBruto == null && costoLaboral == null && total == null) continue;
+      porMes[mesActual].push({ departamento, sueldoBruto, costoLaboral, plus, total, porcentaje });
+    }
+    return { porMes, rawGrid: rows };
+  }
+
+  // Hojas de estructura no verificada (Resultados, Matriz de gastos): se
+  // toma la primera fila no vacía como encabezado y se arma una lista de
+  // filas como objetos {columna: valor}, sin forzar ninguna semántica.
+  function parseHojaCruda(rows) {
+    const headerIdx = rows.findIndex((r) => (r || []).some((c) => (c || '').toString().trim()));
+    if (headerIdx === -1) return { header: [], filas: [], rawGrid: rows };
+    const header = (rows[headerIdx] || []).map((h) => (h || '').toString().trim());
+    const filas = [];
+    for (let r = headerIdx + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      if (row.every((c) => !(c || '').toString().trim())) continue;
+      const obj = {};
+      header.forEach((h, i) => { if (h) obj[h] = row[i] != null ? row[i].toString().trim() : ''; });
+      filas.push(obj);
+    }
+    return { header, filas, rawGrid: rows };
+  }
+
   // ============================================================
   // Estado de datos
   // ============================================================
   const Data = {
     gastosPorMes: {},        // {'MM': [{cuenta, fecha, orden, concepto, debe, haber, saldo}]}
     resultadosPorHoja: {},   // {MES_O_CONSOLIDADO: {filas: [{label, values:{area:monto}, total, notas}], areaCols}}
+    tablasMensuales: {},     // {gastosFijos|clasificacionGastos|capitalN: {filas: [{label, tag, porMes}]}}
+    sueldosYCS: null,        // {porMes: {MES: [{departamento, sueldoBruto, costoLaboral, plus, total, porcentaje}]}}
+    hojasCrudas: {},         // {resultados|matrizGastos: {header, filas}}
     lastLoaded: null,
     loadErrors: [],
   };
@@ -548,10 +645,16 @@
       });
   }
 
+  const NOMBRES_TABLAS_MENSUALES = { gastosFijos: 'Gastos fijos', clasificacionGastos: 'Clasificación de gastos', capitalN: 'Capital N' };
+  const NOMBRES_HOJAS_CRUDAS = { resultados: 'Resultados', matrizGastos: 'Matriz de gastos' };
+
   async function loadAllData() {
     setStatus('loading', 'Cargando datos…');
     Data.gastosPorMes = {};
     Data.resultadosPorHoja = {};
+    Data.tablasMensuales = {};
+    Data.sueldosYCS = null;
+    Data.hojasCrudas = {};
     Data.loadErrors = [];
 
     const tasks = [];
@@ -585,6 +688,35 @@
       Data.loadErrors.push('Hojas de resultados/rentabilidad por área: falta configurar los gids en CONFIG');
     }
 
+    const tablasMensualesEntries = Object.entries(CONFIG.gids.tablasMensuales || {});
+    for (const [clave, gid] of tablasMensualesEntries) {
+      if (isPlaceholder(gid)) continue;
+      tasks.push(
+        fetchCsv(gid)
+          .then((rows) => { Data.tablasMensuales[clave] = parseTablaMensual(rows); })
+          .catch((e) => Data.loadErrors.push((NOMBRES_TABLAS_MENSUALES[clave] || clave) + ': ' + e.message))
+      );
+    }
+
+    const gidSueldos = CONFIG.gids.sueldosYCS;
+    if (!isPlaceholder(gidSueldos)) {
+      tasks.push(
+        fetchCsv(gidSueldos)
+          .then((rows) => { Data.sueldosYCS = parseSueldosPorMes(rows); })
+          .catch((e) => Data.loadErrors.push('Sueldos y CS: ' + e.message))
+      );
+    }
+
+    const hojasCrudasEntries = Object.entries(CONFIG.gids.hojasCrudas || {});
+    for (const [clave, gid] of hojasCrudasEntries) {
+      if (isPlaceholder(gid)) continue;
+      tasks.push(
+        fetchCsv(gid)
+          .then((rows) => { Data.hojasCrudas[clave] = parseHojaCruda(rows); })
+          .catch((e) => Data.loadErrors.push((NOMBRES_HOJAS_CRUDAS[clave] || clave) + ': ' + e.message))
+      );
+    }
+
     await Promise.all(tasks);
     Data.lastLoaded = new Date();
     renderStatus();
@@ -599,7 +731,9 @@
     const nMovimientos = Object.values(Data.gastosPorMes).reduce((sum, arr) => sum + arr.length, 0);
     const nMesesGastos = Object.keys(Data.gastosPorMes).length;
     const nHojasResultados = Object.keys(Data.resultadosPorHoja).length;
-    const hayDatos = nMovimientos > 0 || nHojasResultados > 0;
+    const nTablasMensuales = Object.keys(Data.tablasMensuales).length;
+    const nHojasCrudas = Object.keys(Data.hojasCrudas).length;
+    const hayDatos = nMovimientos > 0 || nHojasResultados > 0 || nTablasMensuales > 0 || Data.sueldosYCS || nHojasCrudas > 0;
 
     if (Data.loadErrors.length > 0 && !hayDatos) {
       setStatus('error', 'Sin datos — revisar configuración');
@@ -614,6 +748,9 @@
     const parts = [];
     if (nMesesGastos > 0) parts.push(nMovimientos + ' movimientos en ' + nMesesGastos + ' hojas de gastos');
     if (nHojasResultados > 0) parts.push(nHojasResultados + ' hojas de resultados por área');
+    if (nTablasMensuales > 0) parts.push(nTablasMensuales + ' tablas mensuales de gastos');
+    if (Data.sueldosYCS) parts.push('Sueldos y CS');
+    if (nHojasCrudas > 0) parts.push(nHojasCrudas + ' hojas adicionales');
     const when = Data.lastLoaded ? Data.lastLoaded.toLocaleTimeString('es-AR') : '';
     const detail = (parts.length ? parts.join(' · ') : 'No se cargaron datos') + (when ? ' · actualizado ' + when : '') +
       (Data.loadErrors.length > 0 ? '\n' + Data.loadErrors.join('\n') : '');
@@ -649,8 +786,43 @@
       },
     },
     {
+      name: 'buscar_rubro_mensual',
+      description: 'Busca un rubro o proveedor recurrente en las tablas mensuales de gastos: "Gastos fijos" (proveedores fijos como estudios contables/legales), "Clasificación de gastos" (gastos con etiqueta Fijo/Variable) y "Capital N" (facturación/gastos/resultado de Cap N), con coincidencia parcial de texto. Estas hojas tienen una columna por mes (Enero a Mayo), a diferencia de "Gastos MM,26" que es un mayor contable.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Rubro o proveedor a buscar (ej: "Tanoira Cassagne", "sueldos", "facturación bruta")' },
+          mes: { type: 'string', description: 'Mes a filtrar, ej "mayo". Si se omite, devuelve todos los meses disponibles para las coincidencias.' },
+        },
+        required: ['query'],
+      },
+    },
+    {
+      name: 'buscar_sueldos',
+      description: 'Devuelve sueldo bruto, costo laboral, plus, total y % del total, por departamento (Mesa, Banca Privada, Banca Corporativa, Middle Office, Operaciones, Administración, RRHH, Tecnología, General, Marketing, Performance) y por mes, según la hoja "Sueldos y CS".',
+      input_schema: {
+        type: 'object',
+        properties: {
+          departamento: { type: 'string', description: 'Departamento a filtrar, con coincidencia parcial (ej: "mesa", "rrhh"). Opcional, si se omite trae todos.' },
+          mes: { type: 'string', description: 'Mes a consultar. Opcional, si se omite trae todos los meses cargados.' },
+        },
+      },
+    },
+    {
+      name: 'buscar_en_hoja_cruda',
+      description: 'Búsqueda de texto genérica sobre hojas del archivo cuya estructura interna no está mapeada a una tool específica: "Resultados" (matriz anual por cuenta contable, Enero a Diciembre) y "Matriz de gastos". Usar solo cuando buscar_gasto, buscar_resultado, buscar_rubro_mensual o buscar_sueldos no encontraron el dato pedido. Devuelve las filas completas (todas sus columnas) que contengan el texto buscado en cualquier celda.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Texto a buscar en cualquier columna de la fila.' },
+          hoja: { type: 'string', description: 'Nombre de la hoja a buscar: "Resultados" o "Matriz de gastos". Opcional, si se omite busca en ambas.' },
+        },
+        required: ['query'],
+      },
+    },
+    {
       name: 'meses_disponibles',
-      description: 'Devuelve qué hojas "Gastos MM,26" y qué hojas de resultados/rentabilidad por área (incluido el CONSOLIDADO) están realmente cargadas. Usar esto antes de asumir que un mes está disponible.',
+      description: 'Devuelve qué hojas de cada tipo (Gastos MM,26; resultados/rentabilidad por área incluido el CONSOLIDADO; tablas mensuales de gastos; Sueldos y CS; hojas crudas) están realmente cargadas. Usar esto antes de asumir que un mes o una hoja está disponible.',
       input_schema: { type: 'object', properties: {} },
     },
   ];
@@ -723,10 +895,105 @@
     return { encontrado: true, resultados };
   }
 
+  function toolBuscarRubroMensual({ query, mes }) {
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    if (mes && !mesNorm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes reconocible.' };
+    }
+    const resultados = [];
+    for (const [clave, hoja] of Object.entries(Data.tablasMensuales)) {
+      if (!hoja) continue;
+      for (const fila of hoja.filas) {
+        if (!matchProveedor(query, fila.label)) continue;
+        const porMes = mesNorm ? { [mesNorm]: fila.porMes[mesNorm] } : fila.porMes;
+        const porMesFormateado = {};
+        for (const [m, monto] of Object.entries(porMes)) if (monto != null) porMesFormateado[m] = formatARS(monto);
+        if (mesNorm && fila.porMes[mesNorm] == null) continue;
+        resultados.push({
+          hoja: NOMBRES_TABLAS_MENSUALES[clave] || clave,
+          rubro: fila.label,
+          tag: fila.tag,
+          por_mes: porMes,
+          por_mes_formateado: porMesFormateado,
+        });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún rubro que coincida con "' + query + '"' +
+          (mes ? ' en ' + mes : '') + ' en las tablas mensuales de gastos (Gastos fijos, Clasificación de gastos, Capital N).',
+      };
+    }
+    return { encontrado: true, resultados };
+  }
+
+  function toolBuscarSueldos({ departamento, mes }) {
+    if (!Data.sueldosYCS) {
+      return { encontrado: false, mensaje: 'No hay datos de la hoja "Sueldos y CS" cargados.' };
+    }
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    if (mes && !mesNorm) {
+      return { encontrado: false, mensaje: '"' + mes + '" no es un mes reconocible.' };
+    }
+    const meses = mesNorm ? [mesNorm] : Object.keys(Data.sueldosYCS.porMes);
+    const resultados = [];
+    for (const m of meses) {
+      const filas = Data.sueldosYCS.porMes[m] || [];
+      for (const fila of filas) {
+        if (departamento && !matchProveedor(departamento, fila.departamento)) continue;
+        resultados.push({
+          mes: m,
+          departamento: fila.departamento,
+          sueldo_bruto: fila.sueldoBruto, sueldo_bruto_formateado: formatARS(fila.sueldoBruto),
+          costo_laboral: fila.costoLaboral, costo_laboral_formateado: formatARS(fila.costoLaboral),
+          plus: fila.plus, plus_formateado: formatARS(fila.plus),
+          total: fila.total, total_formateado: formatARS(fila.total),
+          porcentaje_del_total: fila.porcentaje,
+        });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún departamento que coincida' + (departamento ? ' con "' + departamento + '"' : '') +
+          (mes ? ' en ' + mes : '') + ' en la hoja "Sueldos y CS".',
+      };
+    }
+    return { encontrado: true, resultados };
+  }
+
+  function toolBuscarEnHojaCruda({ query, hoja }) {
+    const claves = hoja
+      ? Object.keys(NOMBRES_HOJAS_CRUDAS).filter((k) => matchProveedor(hoja, NOMBRES_HOJAS_CRUDAS[k]))
+      : Object.keys(Data.hojasCrudas);
+    const resultados = [];
+    for (const clave of claves) {
+      const h = Data.hojasCrudas[clave];
+      if (!h) continue;
+      for (const fila of h.filas) {
+        const texto = Object.values(fila).join(' ');
+        if (!matchProveedor(query, texto)) continue;
+        resultados.push({ hoja: NOMBRES_HOJAS_CRUDAS[clave] || clave, fila });
+      }
+    }
+    if (resultados.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ninguna fila que coincida con "' + query + '"' +
+          (hoja ? ' en la hoja ' + hoja : ' en las hojas crudas cargadas (Resultados, Matriz de gastos)') + '.',
+      };
+    }
+    return { encontrado: true, resultados: resultados.slice(0, 30), total_coincidencias: resultados.length };
+  }
+
   function toolMesesDisponibles() {
     return {
       hojas_gastos_cargadas: Object.keys(Data.gastosPorMes).map(nombreHojaGastos),
       hojas_resultados_cargadas: Object.keys(Data.resultadosPorHoja),
+      tablas_mensuales_cargadas: Object.keys(Data.tablasMensuales).map((k) => NOMBRES_TABLAS_MENSUALES[k] || k),
+      sueldos_y_cs_cargado: !!Data.sueldosYCS,
+      hojas_crudas_cargadas: Object.keys(Data.hojasCrudas).map((k) => NOMBRES_HOJAS_CRUDAS[k] || k),
       nota: '"CONSOLIDADO" no es un mes puntual: son los totales acumulados del período completo, según la hoja CONSOLIDADO.',
     };
   }
@@ -736,6 +1003,9 @@
       switch (name) {
         case 'buscar_gasto': return toolBuscarGasto(input || {});
         case 'buscar_resultado': return toolBuscarResultado(input || {});
+        case 'buscar_rubro_mensual': return toolBuscarRubroMensual(input || {});
+        case 'buscar_sueldos': return toolBuscarSueldos(input || {});
+        case 'buscar_en_hoja_cruda': return toolBuscarEnHojaCruda(input || {});
         case 'meses_disponibles': return toolMesesDisponibles();
         default: return { error: 'Tool desconocida: ' + name };
       }
@@ -748,8 +1018,9 @@
   // Chat: system prompt, historial, loop de tool-use
   // ============================================================
   const SYSTEM_PROMPT = [
-    'Sos un asistente financiero interno de Neix S.A. (ALyC argentino). Tu función es responder preguntas sobre gastos, resultados, facturación y cualquier dato financiero usando exclusivamente la información real del archivo "Resultados por área 2026" en Google Drive, a través de las tools disponibles (buscar_gasto, buscar_resultado, meses_disponibles), que consultan datos ya cargados en el navegador desde ese Google Sheet.',
-    'El archivo tiene hojas mensuales de detalle de gastos ("Gastos MM,26", ej. "Gastos 05,26" para mayo) con columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO — usalas para proveedores o pagos puntuales, buscando coincidencias parciales en CONCEPTO (el proveedor suele venir como parte de una descripción más larga). Y hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N) más un CONSOLIDADO con el acumulado del período — usalas para facturación, resultado o comparaciones entre áreas.',
+    'Sos un asistente financiero interno de Neix S.A. (ALyC argentino). Tu función es responder preguntas sobre gastos, resultados, facturación y cualquier dato financiero usando exclusivamente la información real del archivo "Resultados por área 2026" en Google Drive, a través de las tools disponibles (buscar_gasto, buscar_resultado, buscar_rubro_mensual, buscar_sueldos, buscar_en_hoja_cruda, meses_disponibles), que consultan datos ya cargados en el navegador desde ese Google Sheet.',
+    'El archivo tiene varias familias de hojas: "Gastos MM,26" (ej. "Gastos 05,26" para mayo), el mayor contable con columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO — usá buscar_gasto para proveedores o pagos puntuales, coincidencia parcial en CONCEPTO. Hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N) más un CONSOLIDADO con el acumulado del período — usá buscar_resultado para facturación, resultado o comparaciones entre áreas. "Gastos fijos", "Clasificación de gastos" y "Capital N", tablas con una columna por mes — usá buscar_rubro_mensual para proveedores recurrentes o clasificación fijo/variable. "Sueldos y CS", sueldo bruto/costo laboral/plus/total por departamento y mes — usá buscar_sueldos. "Resultados" (matriz anual por cuenta) y "Matriz de gastos", de estructura no mapeada — usá buscar_en_hoja_cruda solo si las demás tools no encuentran el dato.',
+    'Si no sabés en qué hoja está un dato, probá primero con la tool más específica al tipo de consulta (proveedor puntual → buscar_gasto; facturación/resultado por área → buscar_resultado; proveedor recurrente o fijo/variable → buscar_rubro_mensual; sueldos → buscar_sueldos) y si ninguna encuentra el dato, probá buscar_en_hoja_cruda antes de decir que no lo encontraste.',
     'Si no especifican mes, usá meses_disponibles y considerá todas las hojas mensuales relevantes, agrupando el resultado por mes. Si la consulta cruza datos de varias hojas, indicá de qué hoja sale cada dato.',
     'Nunca inventes montos, proveedores, cuentas ni fechas. Si una tool devuelve encontrado:false o no encontrás el dato en ninguna hoja, decilo claramente en vez de aproximar o suponer.',
     'Siempre citá la hoja y la fecha/mes de donde sale cada dato.',
