@@ -93,166 +93,119 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-  }
-  .model-status {
-    max-width: 480px;
-    margin: 0 auto;
+    gap: 20px;
+    max-width: 960px;
     width: 100%;
-    background: var(--white);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
+    margin: 0 auto;
   }
-  .model-status.error { border-color: var(--red); }
-  .model-status-text {
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
+  .intro {
     color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .model-status.error .model-status-text { color: var(--red); }
-  .model-progress-track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--bg);
-    overflow: hidden;
-  }
-  .model-progress-bar {
-    height: 100%;
-    width: 0%;
-    background: var(--red);
-    transition: width .2s ease;
-  }
-  .empty-state {
-    margin: auto;
-    text-align: center;
-    color: var(--muted);
-    max-width: 480px;
-  }
-  .empty-state h2 {
-    color: var(--dark);
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-  .empty-state .examples {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     font-size: 13px;
+    max-width: 640px;
   }
-  .empty-state .examples span {
+  .intro strong { color: var(--dark); }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tab {
     background: var(--white);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dark);
     cursor: pointer;
   }
-  .empty-state .examples span:hover { border-color: var(--red); }
-
-  .msg-row {
-    display: flex;
-    max-width: 80%;
-  }
-  .msg-row.user { align-self: flex-end; }
-  .msg-row.assistant { align-self: flex-start; }
-  .bubble {
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-  .msg-row.user .bubble {
+  .tab:hover { border-color: var(--red); }
+  .tab.active {
     background: var(--dark);
     color: var(--white);
-    border-radius: 12px 12px 2px 12px;
+    border-color: var(--dark);
   }
-  .msg-row.assistant .bubble {
-    background: var(--white);
-    border: 1px solid var(--line);
-    color: var(--dark);
-    border-radius: 12px 12px 12px 2px;
-  }
-  .msg-row.assistant .bubble.error {
-    border-color: var(--red);
-    color: var(--red);
-  }
-  .thinking-bubble {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .thinking-dots span {
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--muted);
-    margin-right: 2px;
-    animation: blink 1.2s infinite;
-  }
-  .thinking-dots span:nth-child(2) { animation-delay: .2s; }
-  .thinking-dots span:nth-child(3) { animation-delay: .4s; }
-  @keyframes blink { 0%,80%,100%{opacity:.2;} 40%{opacity:1;} }
 
-  footer {
-    padding: 12px 24px 20px;
-    background: var(--bg);
-    border-top: 1px solid var(--line);
-  }
-  .input-row {
+  .panel { display: flex; flex-direction: column; gap: 14px; }
+  .panel form {
     display: flex;
     gap: 10px;
-    max-width: 900px;
-    margin: 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
   }
-  textarea#chat-input {
-    flex: 1;
-    resize: none;
+  .panel input[type="text"], .panel select {
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 12px 14px;
+    border-radius: 8px;
+    padding: 10px 12px;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     color: var(--dark);
     background: var(--white);
-    max-height: 120px;
   }
-  textarea#chat-input:focus { outline: none; border-color: var(--red); }
-  button#send-btn {
+  .panel input[type="text"] { flex: 1; min-width: 220px; }
+  .panel input[type="text"]:focus, .panel select:focus { outline: none; border-color: var(--red); }
+  .panel button {
     background: var(--red);
     color: var(--white);
     border: none;
-    border-radius: 10px;
-    padding: 0 20px;
+    border-radius: 8px;
+    padding: 10px 20px;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
   }
-  button#send-btn:disabled { opacity: .5; cursor: default; }
+  .panel button:hover { opacity: .92; }
+  .panel .hint {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .resultados { display: flex; flex-direction: column; gap: 10px; }
+  .result-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .result-row { display: flex; gap: 8px; padding: 2px 0; }
+  .result-label {
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    min-width: 150px;
+    flex-shrink: 0;
+  }
+  .result-value { color: var(--dark); word-break: break-word; }
+  .result-total {
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    padding-top: 4px;
+  }
+  .result-note {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+  }
+  .no-result { color: var(--muted); font-size: 13px; }
+
+  footer {
+    padding: 10px 24px 16px;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+  }
   .foot-note {
     text-align: center;
     font-size: 11px;
     color: var(--muted);
     font-family: 'DM Mono', monospace;
-    margin: 8px auto 0;
+    margin: 0 auto;
     max-width: 900px;
-  }
-  .foot-note button.clear-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    text-decoration: underline;
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 0;
   }
 
   main::-webkit-scrollbar { width: 8px; }
@@ -279,30 +232,110 @@
   </div>
 </header>
 
-<main id="chat-main">
-  <div class="model-status" id="model-status">
-    <div class="model-status-text" id="model-status-text">Preparando el modelo de IA (se descarga una sola vez, después queda cacheado en el navegador)…</div>
-    <div class="model-progress-track"><div class="model-progress-bar" id="model-progress-bar"></div></div>
+<main id="search-main">
+  <p class="intro">Buscador en vivo sobre el archivo <strong>"Resultados por área 2026"</strong>. Elegí qué querés consultar, completá los filtros y apretá <strong>Buscar</strong> — todo corre en el navegador contra los datos ya cargados, sin ningún servicio externo de por medio.</p>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="gastos" type="button">Gastos (mayor contable)</button>
+    <button class="tab" data-tab="resultados" type="button">Resultados por área</button>
+    <button class="tab" data-tab="rubros" type="button">Rubros mensuales</button>
+    <button class="tab" data-tab="sueldos" type="button">Sueldos y CS</button>
+    <button class="tab" data-tab="cruda" type="button">Búsqueda general</button>
+    <button class="tab" data-tab="meses" type="button">Hojas cargadas</button>
   </div>
-  <div class="empty-state" id="empty-state">
-    <h2>Preguntame sobre los gastos de Neix</h2>
-    <p>Consulto en vivo las hojas "Gastos MM,26" y las hojas de resultados/rentabilidad por área del archivo "Resultados por área 2026". Solo respondo con datos que puedo verificar. Corre 100% en tu navegador — no hay ningún servidor ni API de por medio.</p>
-    <div class="examples">
-      <span data-example="¿Cuánto le pagamos a Tanoira en mayo?">¿Cuánto le pagamos a Tanoira en mayo?</span>
-      <span data-example="¿Cuál es la facturación por área en abril?">¿Cuál es la facturación por área en abril?</span>
-      <span data-example="¿Cuál es el resultado consolidado por área?">¿Cuál es el resultado consolidado por área?</span>
-      <span data-example="¿Cuánto gastamos en sueldos de la Mesa en marzo?">¿Cuánto gastamos en sueldos de la Mesa en marzo?</span>
-    </div>
+
+  <div class="panel" data-panel="gastos">
+    <form id="form-gastos">
+      <input type="text" id="gastos-query" placeholder="Proveedor o texto a buscar (ej: Tanoira)" required>
+      <select id="gastos-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en las hojas "Gastos MM,26" (mayor contable), coincidencia parcial sobre CONCEPTO.</p>
+    <div class="resultados" id="resultados-gastos"></div>
+  </div>
+
+  <div class="panel" data-panel="resultados" hidden>
+    <form id="form-resultados">
+      <input type="text" id="resultados-query" placeholder="Rubro (ej: facturación, resultado, sueldos mesa)" required>
+      <select id="resultados-mes">
+        <option value="">Todos</option>
+        <option value="consolidado">Consolidado</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en las hojas de resultados/rentabilidad por área y en el CONSOLIDADO.</p>
+    <div class="resultados" id="resultados-resultados"></div>
+  </div>
+
+  <div class="panel" data-panel="rubros" hidden>
+    <form id="form-rubros">
+      <input type="text" id="rubros-query" placeholder="Rubro o proveedor recurrente (ej: Tanoira Cassagne, sueldos)" required>
+      <select id="rubros-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Busca en "Gastos fijos", "Clasificación de gastos" y "Capital N" (una columna por mes).</p>
+    <div class="resultados" id="resultados-rubros"></div>
+  </div>
+
+  <div class="panel" data-panel="sueldos" hidden>
+    <form id="form-sueldos">
+      <input type="text" id="sueldos-departamento" placeholder="Departamento (ej: mesa, rrhh) — opcional">
+      <select id="sueldos-mes">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+        <option value="mayo">Mayo</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Sueldo bruto, costo laboral, plus, total y % por departamento y mes, según "Sueldos y CS".</p>
+    <div class="resultados" id="resultados-sueldos"></div>
+  </div>
+
+  <div class="panel" data-panel="cruda" hidden>
+    <form id="form-cruda">
+      <input type="text" id="cruda-query" placeholder="Texto a buscar en cualquier columna" required>
+      <select id="cruda-hoja">
+        <option value="">Ambas hojas</option>
+        <option value="Resultados">Resultados</option>
+        <option value="Matriz de gastos">Matriz de gastos</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+    <p class="hint">Búsqueda de texto genérica sobre "Resultados" y "Matriz de gastos" (estructura no mapeada a una búsqueda específica). Usar solo si las otras pestañas no encontraron el dato.</p>
+    <div class="resultados" id="resultados-cruda"></div>
+  </div>
+
+  <div class="panel" data-panel="meses" hidden>
+    <p class="hint">Qué hojas de cada tipo están realmente cargadas en este momento.</p>
+    <div class="resultados" id="resultados-meses"></div>
   </div>
 </main>
 
 <footer>
-  <div class="input-row">
-    <textarea id="chat-input" rows="1" placeholder="Preguntá por un proveedor, un mes, un área…"></textarea>
-    <button id="send-btn">Enviar</button>
-  </div>
   <div class="foot-note">
-    Los montos se verifican contra los datos cargados de Google Sheets. Si no se encuentra un dato, el asistente lo va a decir en vez de inventarlo. · <button class="clear-btn" id="clear-btn">Borrar historial</button>
+    Los montos se verifican contra los datos cargados de Google Sheets. Si no se encuentra un dato, se muestra explícitamente en vez de inventarlo.
   </div>
 </footer>
 
@@ -367,14 +400,6 @@
       },
     },
   };
-
-  // Modelo de IA que corre 100% en el navegador (WebLLM + WebGPU) — sin
-  // backend, sin API key, sin costo. Se descarga una sola vez (queda
-  // cacheado por el navegador) y después toda la inferencia es local.
-  // Para cambiarlo por uno más grande/preciso (más pesado) o más chico/
-  // liviano (menos preciso), ver la lista de modelos soportados en
-  // https://github.com/mlc-ai/web-llm (prebuiltAppConfig.model_list).
-  const WEBLLM_MODEL_ID = 'Llama-3.2-3B-Instruct-q4f32_1-MLC';
 
   const PLACEHOLDER_MARKERS = ['REEMPLAZAR', 'TU_ID_PUBLICADO'];
   function isPlaceholder(v) {
@@ -797,75 +822,8 @@
   }
 
   // ============================================================
-  // Tools que el modelo puede invocar
+  // Funciones de búsqueda (llamadas directo desde los formularios de la UI)
   // ============================================================
-  const TOOLS = [
-    {
-      name: 'buscar_gasto',
-      description: 'Busca movimientos (pagos, compras) en las hojas "Gastos MM,26" (mayor contable), con coincidencia parcial de texto sobre la columna CONCEPTO (ej. "Tanoira" matchea "COMPRAS TANOIRA CASSAGN 2-42311 SERV PROFESIONALE"). Opcionalmente filtra por mes. Devuelve cada movimiento con su cuenta contable, fecha, concepto y monto exactos (de DEBE o HABER, el que no sea cero), además del total.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Texto o proveedor a buscar dentro del CONCEPTO (ej: "Tanoira", "Farmacia Alesel")' },
-          mes: { type: 'string', description: 'Mes a filtrar, ej "mayo". Si se omite, busca en todas las hojas "Gastos MM,26" ya cargadas.' },
-        },
-        required: ['query'],
-      },
-    },
-    {
-      name: 'buscar_resultado',
-      description: 'Busca un rubro (facturación, gastos directos/indirectos, o cualquier línea puntual como "Sueldos Mesa" o "Comisiones Productores") en las hojas de resultados/rentabilidad por área o en el CONSOLIDADO, con coincidencia parcial de texto. Devuelve la fila completa: el monto por cada área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N), el total y las notas, tal como están en la hoja.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          concepto: { type: 'string', description: 'Rubro o línea a buscar (ej: "facturación", "resultado", "sueldos mesa", "comisiones productores")' },
-          mes: { type: 'string', description: 'Mes a consultar, ej "mayo", o "consolidado"/"acumulado" para el período completo. Si se omite, busca en todas las hojas de resultados ya cargadas.' },
-        },
-        required: ['concepto'],
-      },
-    },
-    {
-      name: 'buscar_rubro_mensual',
-      description: 'Busca un rubro o proveedor recurrente en las tablas mensuales de gastos: "Gastos fijos" (proveedores fijos como estudios contables/legales), "Clasificación de gastos" (gastos con etiqueta Fijo/Variable) y "Capital N" (facturación/gastos/resultado de Cap N), con coincidencia parcial de texto. Estas hojas tienen una columna por mes (Enero a Mayo), a diferencia de "Gastos MM,26" que es un mayor contable.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Rubro o proveedor a buscar (ej: "Tanoira Cassagne", "sueldos", "facturación bruta")' },
-          mes: { type: 'string', description: 'Mes a filtrar, ej "mayo". Si se omite, devuelve todos los meses disponibles para las coincidencias.' },
-        },
-        required: ['query'],
-      },
-    },
-    {
-      name: 'buscar_sueldos',
-      description: 'Devuelve sueldo bruto, costo laboral, plus, total y % del total, por departamento (Mesa, Banca Privada, Banca Corporativa, Middle Office, Operaciones, Administración, RRHH, Tecnología, General, Marketing, Performance) y por mes, según la hoja "Sueldos y CS".',
-      input_schema: {
-        type: 'object',
-        properties: {
-          departamento: { type: 'string', description: 'Departamento a filtrar, con coincidencia parcial (ej: "mesa", "rrhh"). Opcional, si se omite trae todos.' },
-          mes: { type: 'string', description: 'Mes a consultar. Opcional, si se omite trae todos los meses cargados.' },
-        },
-      },
-    },
-    {
-      name: 'buscar_en_hoja_cruda',
-      description: 'Búsqueda de texto genérica sobre hojas del archivo cuya estructura interna no está mapeada a una tool específica: "Resultados" (matriz anual por cuenta contable, Enero a Diciembre) y "Matriz de gastos". Usar solo cuando buscar_gasto, buscar_resultado, buscar_rubro_mensual o buscar_sueldos no encontraron el dato pedido. Devuelve las filas completas (todas sus columnas) que contengan el texto buscado en cualquier celda.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Texto a buscar en cualquier columna de la fila.' },
-          hoja: { type: 'string', description: 'Nombre de la hoja a buscar: "Resultados" o "Matriz de gastos". Opcional, si se omite busca en ambas.' },
-        },
-        required: ['query'],
-      },
-    },
-    {
-      name: 'meses_disponibles',
-      description: 'Devuelve qué hojas de cada tipo (Gastos MM,26; resultados/rentabilidad por área incluido el CONSOLIDADO; tablas mensuales de gastos; Sueldos y CS; hojas crudas) están realmente cargadas. Usar esto antes de asumir que un mes o una hoja está disponible.',
-      input_schema: { type: 'object', properties: {} },
-    },
-  ];
-
   function nombreHojaGastos(mm) {
     return 'Gastos ' + mm + ',26';
   }
@@ -1037,280 +995,128 @@
     };
   }
 
-  function executeTool(name, input) {
-    try {
-      switch (name) {
-        case 'buscar_gasto': return toolBuscarGasto(input || {});
-        case 'buscar_resultado': return toolBuscarResultado(input || {});
-        case 'buscar_rubro_mensual': return toolBuscarRubroMensual(input || {});
-        case 'buscar_sueldos': return toolBuscarSueldos(input || {});
-        case 'buscar_en_hoja_cruda': return toolBuscarEnHojaCruda(input || {});
-        case 'meses_disponibles': return toolMesesDisponibles();
-        default: return { error: 'Tool desconocida: ' + name };
-      }
-    } catch (e) {
-      return { error: 'Error ejecutando la tool: ' + e.message };
-    }
-  }
-
   // ============================================================
-  // Chat: system prompt, historial, loop de tool-use (modelo local WebLLM)
+  // UI: tabs + formularios + render de resultados (sin LLM ni backend)
   // ============================================================
-
-  // Arma una lista de texto de las tools disponibles (nombre, parámetros,
-  // descripción) a partir de TOOLS, para meterla en el system prompt — acá
-  // no hay una API de "function calling" nativa como la de Gemini/Claude:
-  // el modelo tiene que pedir la tool escribiendo un JSON en su respuesta,
-  // que nosotros detectamos y ejecutamos (esquema tipo ReAct).
-  function toolsDescription() {
-    return TOOLS.map((t) => {
-      const props = (t.input_schema && t.input_schema.properties) || {};
-      const params = Object.entries(props).map(([k, v]) => k + (v.description ? ' (' + v.description + ')' : '')).join(', ');
-      return '- ' + t.name + '(' + params + '): ' + t.description;
-    }).join('\n');
+  function humanKey(k) {
+    return k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ');
   }
 
-  const SYSTEM_PROMPT = [
-    'Sos un asistente financiero interno de Neix S.A. (ALyC argentino). Tu función es responder preguntas sobre gastos, resultados, facturación y cualquier dato financiero usando exclusivamente la información real del archivo "Resultados por área 2026", a través de las herramientas (tools) disponibles, que consultan datos ya cargados en el navegador desde ese Google Sheet.',
-
-    'El archivo tiene varias familias de hojas: "Gastos MM,26" (ej. "Gastos 05,26" para mayo), el mayor contable con columnas CUENTA, FECHA, ORDEN, CONCEPTO, DEBE, HABER, SALDO — usá buscar_gasto para proveedores o pagos puntuales, coincidencia parcial en CONCEPTO. Hojas de resultados/rentabilidad por área (Mesa, Banca Corporativa, Banca Privada, Middle Office/FAs, Cap N) más un CONSOLIDADO con el acumulado del período — usá buscar_resultado para facturación, resultado o comparaciones entre áreas. "Gastos fijos", "Clasificación de gastos" y "Capital N", tablas con una columna por mes — usá buscar_rubro_mensual. "Sueldos y CS" — usá buscar_sueldos. "Resultados" y "Matriz de gastos", de estructura no mapeada — usá buscar_en_hoja_cruda solo si las demás tools no encuentran el dato.',
-
-    'Tools disponibles (no inventes ninguna otra ni ningún parámetro que no esté acá):\n' + toolsDescription(),
-
-    'Para usar una tool: respondé ÚNICA Y EXCLUSIVAMENTE con un JSON de una sola línea, sin explicación antes ni después, con esta forma exacta: {"tool": "nombre_de_la_tool", "args": {...}}. Ejemplo: {"tool": "buscar_gasto", "args": {"query": "Tanoira", "mes": "mayo"}}',
-
-    'Después de pedir una tool, en el próximo turno vas a recibir un mensaje que arranca con "Resultado de la tool" seguido del JSON con el resultado real. Con ese resultado, respondé la pregunta original del usuario en texto plano (nunca en JSON), citando siempre la hoja y el mes de donde sale el dato.',
-
-    'Si podés responder sin necesitar ninguna tool (por ejemplo, un saludo, o una aclaración sobre cómo funciona esto), respondé directo en texto plano, sin JSON.',
-
-    'Nunca inventes montos, proveedores, cuentas ni fechas. Si el resultado de una tool tiene "encontrado": false, o no encontrás el dato en ninguna hoja, decilo claramente en vez de aproximar o suponer.',
-
-    'Formateá los montos en pesos argentinos con separador de miles y 2 decimales (ej. $2.364.000,00) — usá los campos que terminan en "_formateado" que devuelven las tools, ya vienen así.',
-
-    'Si hay varios registros que matchean, mostrá el detalle (fecha, concepto, monto) y el total.',
-
-    '"CONSOLIDADO" (también "acumulado" o "total") es un pseudo-mes especial que representa los totales del período completo, no un mes puntual.',
-
-    'Respondé en español rioplatense, directo y sin vueltas.',
-  ].join('\n\n');
-
-  // v3 porque el formato de conversación volvió a cambiar: ahora es texto
-  // plano estilo {role, content} en vez de los "parts" de Gemini — un
-  // historial viejo en localStorage rompería el render con el formato nuevo.
-  const HISTORY_KEY = 'neix-gastos-chat-history-v3';
-  let conversation = loadHistory();
-
-  function loadHistory() {
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
+  function renderValue(v) {
+    if (v == null || v === '') return '—';
+    if (typeof v === 'object') {
+      const entries = Object.entries(v);
+      if (entries.length === 0) return '—';
+      return entries.map(([k, val]) => humanKey(k) + ': ' + (val == null ? '—' : val)).join(' · ');
     }
+    return String(v);
   }
 
-  function saveHistory() {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(conversation)); } catch (e) { /* ignore */ }
+  // Arma una card por resultado. Si existe "campo_formateado" junto a
+  // "campo", se muestra solo el formateado (evita duplicar el mismo monto
+  // en crudo y en formato $ AR).
+  function renderResultCard(obj) {
+    const skip = new Set();
+    for (const k of Object.keys(obj)) {
+      if (k.endsWith('_formateado')) skip.add(k.slice(0, -'_formateado'.length));
+    }
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    for (const [k, v] of Object.entries(obj)) {
+      if (skip.has(k)) continue;
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      const label = document.createElement('span');
+      label.className = 'result-label';
+      const labelKey = k.endsWith('_formateado') ? k.slice(0, -'_formateado'.length) : k;
+      label.textContent = humanKey(labelKey) + ':';
+      const val = document.createElement('span');
+      val.className = 'result-value';
+      val.textContent = renderValue(v);
+      row.appendChild(label);
+      row.appendChild(val);
+      card.appendChild(row);
+    }
+    return card;
   }
 
-  const chatMain = document.getElementById('chat-main');
-  const emptyState = document.getElementById('empty-state');
-  const chatInput = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('send-btn');
-
-  function renderConversation() {
-    const modelStatus = document.getElementById('model-status');
-    chatMain.innerHTML = '';
-    if (modelStatus) chatMain.appendChild(modelStatus);
-    const visible = conversation.filter((m) => !m.hidden && (m.role === 'user' || m.role === 'assistant'));
-    if (visible.length === 0) {
-      chatMain.appendChild(emptyState);
+  function mostrarResultados(containerId, resultado) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (!resultado.encontrado && resultado.encontrado !== undefined) {
+      const p = document.createElement('p');
+      p.className = 'no-result';
+      p.textContent = resultado.mensaje || 'No se encontró nada.';
+      container.appendChild(p);
       return;
     }
-    for (const m of visible) {
-      if (!m.content || !m.content.trim()) continue;
-      appendBubble(m.role, m.content, false);
+    const lista = resultado.resultados || [resultado];
+    for (const r of lista) container.appendChild(renderResultCard(r));
+    if (resultado.total_formateado != null) {
+      const totalEl = document.createElement('div');
+      totalEl.className = 'result-total';
+      totalEl.textContent = 'Total: ' + resultado.total_formateado;
+      container.appendChild(totalEl);
     }
-    chatMain.scrollTop = chatMain.scrollHeight;
-  }
-
-  function appendBubble(role, text, isError) {
-    const row = document.createElement('div');
-    row.className = 'msg-row ' + role;
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble' + (isError ? ' error' : '');
-    bubble.textContent = text;
-    row.appendChild(bubble);
-    chatMain.appendChild(row);
-    chatMain.scrollTop = chatMain.scrollHeight;
-    return row;
-  }
-
-  function appendThinking() {
-    const row = document.createElement('div');
-    row.className = 'msg-row assistant';
-    row.id = 'thinking-row';
-    row.innerHTML = '<div class="bubble thinking-bubble"><span class="thinking-dots"><span></span><span></span><span></span></span>Pensando…</div>';
-    chatMain.appendChild(row);
-    chatMain.scrollTop = chatMain.scrollHeight;
-  }
-
-  function removeThinking() {
-    const el = document.getElementById('thinking-row');
-    if (el) el.remove();
-  }
-
-  // ---- Modelo local (WebLLM) ----
-  let engine = null;
-  let modelReady = false;
-
-  function setModelStatus(text, pct) {
-    const textEl = document.getElementById('model-status-text');
-    if (textEl) textEl.textContent = text;
-    const barEl = document.getElementById('model-progress-bar');
-    if (barEl && pct != null) barEl.style.width = Math.max(0, Math.min(1, pct)) * 100 + '%';
-  }
-
-  function setInputReady(ready) {
-    chatInput.disabled = !ready;
-    sendBtn.disabled = !ready;
-    chatInput.placeholder = ready
-      ? 'Preguntá por un proveedor, un mes, un área…'
-      : 'Cargando el modelo de IA…';
-  }
-
-  async function initModel() {
-    setInputReady(false);
-    if (!navigator.gpu) {
-      setModelStatus('Tu navegador no soporta WebGPU — probá con la última versión de Chrome o Edge para usar el modelo local.', 0);
-      const el = document.getElementById('model-status');
-      if (el) el.classList.add('error');
-      return;
-    }
-    try {
-      const webllm = await import('https://esm.run/@mlc-ai/web-llm');
-      engine = new webllm.MLCEngine();
-      engine.setInitProgressCallback((report) => {
-        setModelStatus(report.text || 'Cargando modelo…', report.progress);
-      });
-      await engine.reload(WEBLLM_MODEL_ID);
-      modelReady = true;
-      const el = document.getElementById('model-status');
-      if (el) el.remove();
-      setInputReady(true);
-    } catch (err) {
-      setModelStatus('No se pudo cargar el modelo de IA: ' + err.message, 0);
-      const el = document.getElementById('model-status');
-      if (el) el.classList.add('error');
+    if (resultado.total_coincidencias != null && resultado.total_coincidencias > lista.length) {
+      const note = document.createElement('div');
+      note.className = 'result-note';
+      note.textContent = 'Mostrando ' + lista.length + ' de ' + resultado.total_coincidencias + ' coincidencias.';
+      container.appendChild(note);
     }
   }
 
-  async function callModel(history) {
-    const messages = [{ role: 'system', content: SYSTEM_PROMPT }]
-      .concat(history.map((m) => ({ role: m.role, content: m.content })));
-    const reply = await engine.chat.completions.create({ messages, temperature: 0.2 });
-    const choice = reply.choices && reply.choices[0];
-    return (choice && choice.message && choice.message.content) || '';
-  }
-
-  // Si la respuesta del modelo es (o contiene) un JSON {"tool": "...", "args": {...}},
-  // la interpretamos como un pedido de tool en vez de una respuesta final.
-  function parseToolCall(text) {
-    const match = (text || '').match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    let parsed;
-    try { parsed = JSON.parse(match[0]); } catch (e) { return null; }
-    if (!parsed || typeof parsed.tool !== 'string') return null;
-    return { name: parsed.tool, args: parsed.args || {} };
-  }
-
-  const MAX_TOOL_ROUNDS = 4;
-
-  async function runTurn() {
-    if (!modelReady) {
-      appendBubble('assistant', 'El modelo de IA todavía se está cargando, esperá un momento y probá de nuevo.', true);
-      return;
-    }
-    appendThinking();
-    try {
-      let rounds = 0;
-      let text = await callModel(conversation);
-      let call = parseToolCall(text);
-
-      while (call && rounds < MAX_TOOL_ROUNDS) {
-        rounds++;
-        conversation.push({ role: 'assistant', content: text, hidden: true });
-        const result = executeTool(call.name, call.args);
-        conversation.push({
-          role: 'user',
-          content: 'Resultado de la tool "' + call.name + '": ' + JSON.stringify(result) +
-            '\n\nCon este resultado, respondé la pregunta original del usuario en texto plano (sin JSON), citando la hoja y el mes.',
-          hidden: true,
-        });
-        saveHistory();
-        text = await callModel(conversation);
-        call = parseToolCall(text);
+  // ---- Tabs ----
+  document.querySelectorAll('#tabs .tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+      if (tab.dataset.tab === 'meses') {
+        mostrarResultados('resultados-meses', toolMesesDisponibles());
       }
-
-      conversation.push({ role: 'assistant', content: text });
-      saveHistory();
-      removeThinking();
-      appendBubble('assistant', text || '(sin respuesta de texto)', false);
-    } catch (err) {
-      removeThinking();
-      appendBubble('assistant', 'Ocurrió un error al consultar al modelo: ' + err.message, true);
-    }
-  }
-
-  function sendMessage(text) {
-    if (!text.trim() || !modelReady) return;
-    conversation.push({ role: 'user', content: text.trim() });
-    saveHistory();
-    if (chatMain.contains(emptyState)) emptyState.remove();
-    appendBubble('user', text.trim(), false);
-    chatInput.value = '';
-    chatInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    chatInput.disabled = true;
-    runTurn().finally(() => {
-      sendBtn.disabled = false;
-      chatInput.disabled = false;
-      chatInput.focus();
     });
-  }
-
-  sendBtn.addEventListener('click', () => sendMessage(chatInput.value));
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(chatInput.value);
-    }
-  });
-  chatInput.addEventListener('input', () => {
-    chatInput.style.height = 'auto';
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
   });
 
-  document.getElementById('clear-btn').addEventListener('click', () => {
-    if (!confirm('¿Borrar todo el historial de la conversación?')) return;
-    conversation = [];
-    saveHistory();
-    renderConversation();
+  // ---- Formularios ----
+  document.getElementById('form-gastos').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('gastos-query').value.trim();
+    const mes = document.getElementById('gastos-mes').value;
+    mostrarResultados('resultados-gastos', toolBuscarGasto({ query, mes: mes || undefined }));
   });
 
-  document.querySelectorAll('.empty-state .examples span').forEach((el) => {
-    el.addEventListener('click', () => sendMessage(el.getAttribute('data-example')));
+  document.getElementById('form-resultados').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const concepto = document.getElementById('resultados-query').value.trim();
+    const mes = document.getElementById('resultados-mes').value;
+    mostrarResultados('resultados-resultados', toolBuscarResultado({ concepto, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-rubros').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('rubros-query').value.trim();
+    const mes = document.getElementById('rubros-mes').value;
+    mostrarResultados('resultados-rubros', toolBuscarRubroMensual({ query, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-sueldos').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const departamento = document.getElementById('sueldos-departamento').value.trim();
+    const mes = document.getElementById('sueldos-mes').value;
+    mostrarResultados('resultados-sueldos', toolBuscarSueldos({ departamento: departamento || undefined, mes: mes || undefined }));
+  });
+
+  document.getElementById('form-cruda').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = document.getElementById('cruda-query').value.trim();
+    const hoja = document.getElementById('cruda-hoja').value;
+    mostrarResultados('resultados-cruda', toolBuscarEnHojaCruda({ query, hoja: hoja || undefined }));
   });
 
   // ============================================================
   // Init
   // ============================================================
-  setInputReady(false);
-  renderConversation();
   loadAllData();
-  initModel();
 })();
 </script>
 </body>

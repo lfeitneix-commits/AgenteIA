@@ -1,14 +1,14 @@
-# Asistente de Gastos — Neix S.A.
+# Buscador de Gastos — Neix S.A.
 
-Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". El modelo de IA corre **100% en el navegador** (vía [WebLLM](https://github.com/mlc-ai/web-llm) + WebGPU): no hay API externa, no hay backend, no hay API key que configurar ni cuenta que crear. El modelo interpreta la pregunta e invoca funciones que corren en el propio navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
+Buscador interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Es una página **100% estática, sin backend ni API externa de ningún tipo**: los datos se cargan y se buscan enteramente en el navegador. No hay chat en lenguaje natural — es una interfaz de filtros (elegís qué querés buscar, completás los campos, apretás "Buscar").
 
 ## Estructura
 
 ```
-index.html      → toda la app (HTML+CSS+JS, un solo archivo, sin build ni backend)
+index.html      → toda la app (HTML+CSS+JS, un solo archivo, sin build ni dependencias propias)
 ```
 
-No hay carpeta `api/` ni variables de entorno: es un sitio 100% estático. Se puede servir desde cualquier hosting estático (Vercel, Netlify, GitHub Pages) o abrir localmente.
+No hay carpeta `api/`, ni variables de entorno, ni servicio de terceros que configurar (más allá de las hojas de Google Sheets publicadas como CSV). Se puede abrir `index.html` directo en un navegador, o servirlo desde cualquier hosting estático (Vercel, GitHub Pages, Netlify, o un simple `python -m http.server`).
 
 ## Fuente de datos: "Resultados por área 2026"
 
@@ -20,7 +20,7 @@ El archivo es un Google Sheet con varias familias de hojas (confirmado inspeccio
 - **"Sueldos y CS"**: un mini-bloque por mes (ENERO, FEBRERO, ...) con sueldo bruto, costo laboral, plus, total y % por departamento (Mesa, Banca Privada, Banca Corporativa, Middle Office, Operaciones, Administración, RRHH, Tecnología, General, Marketing, Performance).
 - **"Resultados"** (matriz anual por cuenta contable, Enero a Diciembre) y **"Matriz de gastos"**: su estructura interna no está completamente mapeada, así que se cargan como grilla genérica (header + filas) para poder buscarlas por texto sin forzar un parseo específico.
 
-El asistente no le impone una clasificación fija a las hojas de resultados (no calcula "ingresos/egresos/resultado" como categorías cerradas): guarda cada fila tal cual está en el sheet para poder buscar por rubro y devolver el dato exacto con su fuente.
+La app no le impone una clasificación fija a las hojas de resultados (no calcula "ingresos/egresos/resultado" como categorías cerradas): guarda cada fila tal cual está en el sheet para poder buscar por rubro y devolver el dato exacto con su fuente.
 
 ## 1. Publicar las hojas de Google Sheets como CSV
 
@@ -53,11 +53,11 @@ const CONFIG = {
 };
 ```
 
-Estos gids no pudieron verificarse en vivo (el entorno donde se armó/actualizó esta app no tiene salida de red hacia `docs.google.com`) — antes de usar en producción, abrí la app, mandá una pregunta simple ("¿qué meses hay disponibles?") y confirmá que los montos coinciden con el sheet real.
+Estos gids no pudieron verificarse en vivo (el entorno donde se armó/actualizó esta app no tiene salida de red hacia `docs.google.com`) — antes de usar en producción, abrí la app, andá a la pestaña **"Hojas cargadas"** y confirmá que los montos coinciden con el sheet real.
 
-- `gids.resultados.consolidado` es la hoja con los totales acumulados del período completo (no es un mes puntual) — el asistente la expone como el pseudo-mes especial **"CONSOLIDADO"** (también acepta "acumulado" o "total").
-- A medida que se agreguen meses nuevos (Junio, Julio, ...), agregar una entrada más en `gids.gastos` y en `gids.resultados` con el gid de esa pestaña, y publicarla igual que las demás.
-- Si un gid queda con el placeholder (`REEMPLAZAR_...`), el asistente simplemente no va a cargar esa hoja y lo va a mostrar en el tooltip del estado — no rompe nada, pero esa hoja no estará disponible hasta completarla.
+- `gids.resultados.consolidado` es la hoja con los totales acumulados del período completo (no es un mes puntual) — se expone como el pseudo-mes especial **"CONSOLIDADO"** (también acepta "acumulado" o "total").
+- A medida que se agreguen meses nuevos (Junio, Julio, ...), agregar una entrada más en `gids.gastos` y en `gids.resultados` con el gid de esa pestaña, y publicarla igual que las demás. También conviene sumar la opción correspondiente en los `<select>` de mes de `index.html` (buscar `<option value="enero">Enero</option>` y agregar una línea al lado por cada `<select>`).
+- Si un gid queda con el placeholder (`REEMPLAZAR_...`), la app simplemente no va a cargar esa hoja y lo va a mostrar en el tooltip del estado (arriba a la derecha) — no rompe nada, pero esa hoja no estará disponible hasta completarla.
 
 ### Sobre el parseo
 
@@ -71,40 +71,23 @@ Los parsers dentro de `index.html` son adaptativos (detectan encabezados por nom
 
 Si la estructura real de alguna pestaña difiere de esto, estas funciones son las únicas que dependen del layout exacto del sheet.
 
-## 3. El modelo de IA (WebLLM, sin API)
+## 3. Deploy
 
-No hace falta ninguna key ni cuenta. `index.html` carga [WebLLM](https://github.com/mlc-ai/web-llm) desde un CDN (`https://esm.run/@mlc-ai/web-llm`) con `import()` dinámico, y corre el modelo `Llama-3.2-3B-Instruct-q4f32_1-MLC` enteramente en el navegador vía WebGPU.
+No hace falta nada especial: es un único archivo HTML estático. Algunas opciones:
 
-- **Requiere un navegador con WebGPU** (Chrome/Edge recientes; Safari/Firefox tienen soporte parcial o nulo según versión).
-- **La primera vez** que se abre la página, el navegador descarga los pesos del modelo (unos ~2 GB) desde Hugging Face — se ve una barra de progreso arriba del chat mientras tanto. Después queda cacheado por el navegador y las siguientes visitas arrancan rápido.
-- **Toda la inferencia es local**: nada de lo que se pregunta ni de los datos financieros sale de la computadora de quien lo usa.
-- Para cambiar de modelo (uno más grande/preciso pero más pesado, o más chico/liviano pero menos preciso), basta con cambiar el valor de `WEBLLM_MODEL_ID` en `index.html` por otro id de la lista de modelos soportados por WebLLM (`prebuiltAppConfig.model_list` en su repo).
+- **Vercel / Netlify**: conectar el repo, listo — detectan `index.html` automáticamente, no hace falta configurar nada más (no hay funciones serverless ni variables de entorno).
+- **GitHub Pages**: activarlo en la configuración del repo apuntando a la rama/carpeta donde está `index.html`.
+- **Local**: `open index.html` directo, o `python3 -m http.server` y entrar a `localhost:8000`.
 
-### Cómo se invocan las tools sin function calling nativo
-
-A diferencia de Gemini/Claude, no hay una API de "tool use" estructurada para modelos corriendo localmente en WebLLM del tamaño que usamos acá. En su lugar se usa un esquema tipo ReAct por prompt:
-
-1. El system prompt le describe al modelo las 6 tools disponibles (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles`) y le pide que, si necesita una, responda con un JSON de una sola línea: `{"tool": "...", "args": {...}}`.
-2. El frontend detecta ese JSON en la respuesta del modelo (`parseToolCall`), ejecuta la función real correspondiente contra los datos ya cargados, y le manda el resultado de vuelta al modelo como un mensaje de usuario que arranca con `Resultado de la tool "...":`.
-3. El modelo responde entonces en texto plano con la respuesta final. Ese ida y vuelta interno (el JSON pedido y el resultado) se guarda en el historial pero se marca `hidden: true` para no mostrarlo en el chat — solo se ve la pregunta y la respuesta final.
-4. Se acotan los rounds de tool-use a 4 por turno (`MAX_TOOL_ROUNDS`) para no quedar en loop si el modelo insiste en pedir tools.
-
-Este esquema es más frágil que el function calling nativo de un modelo grande en la nube: un modelo de 3B parámetros puede a veces no respetar el formato JSON exacto, inventar un nombre de tool que no existe, o directamente no darse cuenta de que necesita una tool. El código tolera bastante (busca cualquier `{...}` en el texto, no exige que sea *todo* el mensaje), pero no es infalible — si el chat responde raro, probá reformular la pregunta de forma más directa (ej. "buscá gastos de Tanoira en mayo" en vez de una pregunta larga y ambigua).
-
-## Deploy
-
-Es un archivo estático, ninguna configuración especial:
-
-- **Vercel / Netlify**: conectar el repo, listo.
-- **GitHub Pages**: activarlo apuntando a `index.html`.
-- **Local**: abrir el archivo directo, o `python3 -m http.server` y entrar a `localhost:8000`.
+Cualquiera de estas opciones funciona igual porque no hay nada del lado del servidor — todo el fetch de los CSVs y toda la búsqueda pasan en el navegador de quien lo abre.
 
 ## Cómo funciona
 
-1. Al cargar la página, `index.html` hace fetch de cada CSV publicado (los 17 gids de `CONFIG`) y los parsea con PapaParse (vía CDN) en memoria.
-2. En paralelo, descarga (o recupera de caché) el modelo WebLLM y lo inicializa — se ve el progreso en una barra arriba del chat. Hasta que esto termina, la caja de texto queda deshabilitada.
-3. El usuario escribe una pregunta. Se manda todo el historial + el system prompt al modelo local (`engine.chat.completions.create`).
-4. Si el modelo pide una tool (JSON `{"tool": ..., "args": ...}`), se ejecuta la función real (`buscar_gasto`, etc.) contra los datos ya cargados, y el resultado se le devuelve al modelo para que arme la respuesta final.
-5. La respuesta final se muestra en el chat. El historial se guarda en `localStorage` (clave `neix-gastos-chat-history-v3`, sin login, uso personal).
+1. Al cargar la página, `index.html` hace fetch de cada CSV publicado (los 17 gids de `CONFIG`) y los parsea con PapaParse (vía CDN) en memoria — no hay backend de datos, todo vive en el navegador de cada sesión.
+2. La interfaz tiene 6 pestañas, una por tipo de búsqueda: **Gastos** (mayor contable), **Resultados por área**, **Rubros mensuales** (Gastos fijos/Clasificación/Capital N), **Sueldos y CS**, **Búsqueda general** (fallback sobre las hojas "Resultados" y "Matriz de gastos") y **Hojas cargadas** (qué se cargó realmente).
+3. Cada pestaña tiene un formulario simple (texto a buscar +, según el caso, un `<select>` de mes/hoja). Al enviarlo, se llama directo a la función de búsqueda correspondiente (`toolBuscarGasto`, `toolBuscarResultado`, `toolBuscarRubroMensual`, `toolBuscarSueldos`, `toolBuscarEnHojaCruda`) — coincidencia de texto parcial, sin distinguir mayúsculas/acentos.
+4. El resultado se muestra como una lista de "cards" (una por coincidencia) con todos los campos relevantes ya formateados en pesos argentinos, más el total cuando corresponde. Si no hay coincidencias, se muestra un mensaje explícito en vez de inventar un dato.
 
-**Nota:** este entorno no tiene salida de red hacia el CDN de WebLLM ni GPU, así que no se pudo probar la carga real del modelo ni la calidad de sus respuestas — se verificó toda la lógica (el loop de tool-use, el parseo del JSON, qué se guarda/oculta en el historial, que la UI no tire errores) con un motor simulado que imita la forma de la respuesta real de WebLLM. Antes de darlo por andando, abrilo en Chrome o Edge, esperá a que la barra de progreso termine, y probá una pregunta simple.
+## Historial
+
+Este proyecto reemplazó una versión anterior con chat en lenguaje natural (primero con la API de Claude, después con la de Google Gemini como alternativa gratuita). Se sacó el LLM del medio por completo para no depender de ninguna API key ni de configuración de facturación — toda la lógica de búsqueda que antes usaban esas tools quedó intacta, solo cambió cómo se invoca (formularios en vez de una IA interpretando la pregunta).
