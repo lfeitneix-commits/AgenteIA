@@ -1,14 +1,14 @@
-# Asistente de Gastos — Neix S.A.
+# Buscador de Gastos — Neix S.A.
 
-Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Usa la API de **Google Gemini** (gratis vía Google AI Studio, sin tarjeta) con function calling: el modelo interpreta la pregunta e invoca funciones que corren en el navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
+Buscador interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Es una página **100% estática, sin backend ni API externa de ningún tipo**: los datos se cargan y se buscan enteramente en el navegador. No hay chat en lenguaje natural — es una interfaz de filtros (elegís qué querés buscar, completás los campos, apretás "Buscar").
 
 ## Estructura
 
 ```
-index.html      → interfaz de chat completa (HTML+CSS+JS, un solo archivo)
-api/chat.js      → función serverless de Vercel que hace de proxy a la API de Gemini
-                   (guarda la API key del lado del servidor, nunca en el browser)
+index.html      → toda la app (HTML+CSS+JS, un solo archivo, sin build ni dependencias propias)
 ```
+
+No hay carpeta `api/`, ni variables de entorno, ni servicio de terceros que configurar (más allá de las hojas de Google Sheets publicadas como CSV). Se puede abrir `index.html` directo en un navegador, o servirlo desde cualquier hosting estático (Vercel, GitHub Pages, Netlify, o un simple `python -m http.server`).
 
 ## Fuente de datos: "Resultados por área 2026"
 
@@ -20,7 +20,7 @@ El archivo es un Google Sheet con varias familias de hojas (confirmado inspeccio
 - **"Sueldos y CS"**: un mini-bloque por mes (ENERO, FEBRERO, ...) con sueldo bruto, costo laboral, plus, total y % por departamento (Mesa, Banca Privada, Banca Corporativa, Middle Office, Operaciones, Administración, RRHH, Tecnología, General, Marketing, Performance).
 - **"Resultados"** (matriz anual por cuenta contable, Enero a Diciembre) y **"Matriz de gastos"**: su estructura interna no está completamente mapeada, así que se cargan como grilla genérica (header + filas) para poder buscarlas por texto sin forzar un parseo específico.
 
-El asistente no le impone una clasificación fija a las hojas de resultados (no calcula "ingresos/egresos/resultado" como categorías cerradas): guarda cada fila tal cual está en el sheet para poder buscar por rubro y devolver el dato exacto con su fuente.
+La app no le impone una clasificación fija a las hojas de resultados (no calcula "ingresos/egresos/resultado" como categorías cerradas): guarda cada fila tal cual está en el sheet para poder buscar por rubro y devolver el dato exacto con su fuente.
 
 ## 1. Publicar las hojas de Google Sheets como CSV
 
@@ -50,16 +50,14 @@ const CONFIG = {
     sueldosYCS: '987036881',
     hojasCrudas: { resultados: '1908736161', matrizGastos: '44234235' },
   },
-  apiEndpoint: '/api/chat',
-  model: 'gemini-2.5-flash',
 };
 ```
 
-Estos gids no pudieron verificarse en vivo (el entorno donde se armó/actualizó esta app no tiene salida de red hacia `docs.google.com`) — antes de usar en producción, abrí la app, mandá una pregunta simple ("¿qué meses hay disponibles?") y confirmá que los montos coinciden con el sheet real.
+Estos gids no pudieron verificarse en vivo (el entorno donde se armó/actualizó esta app no tiene salida de red hacia `docs.google.com`) — antes de usar en producción, abrí la app, andá a la pestaña **"Hojas cargadas"** y confirmá que los montos coinciden con el sheet real.
 
-- `gids.resultados.consolidado` es la hoja con los totales acumulados del período completo (no es un mes puntual) — el asistente la expone como el pseudo-mes especial **"CONSOLIDADO"** (también acepta "acumulado" o "total").
-- A medida que se agreguen meses nuevos (Junio, Julio, ...), agregar una entrada más en `gids.gastos` y en `gids.resultados` con el gid de esa pestaña, y publicarla igual que las demás.
-- Si un gid queda con el placeholder (`REEMPLAZAR_...`), el asistente simplemente no va a cargar esa hoja y lo va a mostrar en el tooltip del estado — no rompe nada, pero esa hoja no estará disponible hasta completarla.
+- `gids.resultados.consolidado` es la hoja con los totales acumulados del período completo (no es un mes puntual) — se expone como el pseudo-mes especial **"CONSOLIDADO"** (también acepta "acumulado" o "total").
+- A medida que se agreguen meses nuevos (Junio, Julio, ...), agregar una entrada más en `gids.gastos` y en `gids.resultados` con el gid de esa pestaña, y publicarla igual que las demás. También conviene sumar la opción correspondiente en los `<select>` de mes de `index.html` (buscar `<option value="enero">Enero</option>` y agregar una línea al lado por cada `<select>`).
+- Si un gid queda con el placeholder (`REEMPLAZAR_...`), la app simplemente no va a cargar esa hoja y lo va a mostrar en el tooltip del estado (arriba a la derecha) — no rompe nada, pero esa hoja no estará disponible hasta completarla.
 
 ### Sobre el parseo
 
@@ -73,44 +71,23 @@ Los parsers dentro de `index.html` son adaptativos (detectan encabezados por nom
 
 Si la estructura real de alguna pestaña difiere de esto, estas funciones son las únicas que dependen del layout exacto del sheet.
 
-## 3. Conseguir una API key de Gemini (gratis)
+## 3. Deploy
 
-1. Entrar a **[aistudio.google.com](https://aistudio.google.com)** con una cuenta de Google.
-2. **Get API key → Create API key**. No pide tarjeta para el tier gratuito.
-3. Copiar la key (algo como `AIzaSy...`).
+No hace falta nada especial: es un único archivo HTML estático. Algunas opciones:
 
-El tier gratuito tiene límites de requests por minuto/día (varían según el modelo); para el uso esporádico de un chatbot interno debería alcanzar sin problema. Si en algún momento se necesita más volumen, se puede habilitar facturación en el mismo proyecto de Google Cloud sin cambiar nada del código.
+- **Vercel / Netlify**: conectar el repo, listo — detectan `index.html` automáticamente, no hace falta configurar nada más (no hay funciones serverless ni variables de entorno).
+- **GitHub Pages**: activarlo en la configuración del repo apuntando a la rama/carpeta donde está `index.html`.
+- **Local**: `open index.html` directo, o `python3 -m http.server` y entrar a `localhost:8000`.
 
-El navegador **nunca** llama directo a `generativelanguage.googleapis.com` — llama a `/api/chat`, que corre en el servidor de Vercel y ahí sí usa la key. Esto evita exponer la API key en el código fuente que cualquiera puede ver en el navegador.
-
-En Vercel: **Project Settings → Environment Variables** → agregar:
-
-```
-GEMINI_API_KEY = AIzaSy...
-```
-
-Redeployar después de agregarla.
-
-## 4. Deploy en Vercel
-
-Igual que tus otros proyectos: conectar el repo a Vercel (o `vercel --prod` desde la CLI). No hace falta configuración adicional — Vercel detecta automáticamente `index.html` como estático y `api/chat.js` como función serverless.
-
-Para probar en local con `vercel dev` (requiere `vercel login` y tener `GEMINI_API_KEY` en un `.env.local`):
-
-```bash
-npm i -g vercel
-vercel dev
-```
+Cualquiera de estas opciones funciona igual porque no hay nada del lado del servidor — todo el fetch de los CSVs y toda la búsqueda pasan en el navegador de quien lo abre.
 
 ## Cómo funciona
 
-1. Al cargar la página, `index.html` hace fetch de cada CSV publicado y los parsea con PapaParse (vía CDN) en memoria — no hay backend de datos, todo vive en el navegador de cada sesión.
-2. El usuario escribe una pregunta. El frontend manda el historial de la conversación (formato Gemini: `contents` con `role: 'user'|'model'` y `parts`) + la lista de tools (`functionDeclarations`) a `/api/chat`.
-3. `/api/chat` reenvía la llamada a `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` con el modelo `gemini-2.5-flash`, agregando la API key del servidor vía el header `x-goog-api-key`.
-4. Si Gemini decide invocar una tool (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles` — le llegan como `functionCall` dentro de la respuesta), la función correspondiente corre **en el navegador** contra los datos ya cargados, y el resultado se le manda de vuelta a Gemini como una parte `functionResponse`.
-5. Este loop se repite hasta que Gemini responde con texto final, que se muestra en el chat.
-6. El historial de la conversación se guarda en `localStorage` del navegador (sin login, uso personal) bajo la clave `neix-gastos-chat-history-v2`.
+1. Al cargar la página, `index.html` hace fetch de cada CSV publicado (los 17 gids de `CONFIG`) y los parsea con PapaParse (vía CDN) en memoria — no hay backend de datos, todo vive en el navegador de cada sesión.
+2. La interfaz tiene 6 pestañas, una por tipo de búsqueda: **Gastos** (mayor contable), **Resultados por área**, **Rubros mensuales** (Gastos fijos/Clasificación/Capital N), **Sueldos y CS**, **Búsqueda general** (fallback sobre las hojas "Resultados" y "Matriz de gastos") y **Hojas cargadas** (qué se cargó realmente).
+3. Cada pestaña tiene un formulario simple (texto a buscar +, según el caso, un `<select>` de mes/hoja). Al enviarlo, se llama directo a la función de búsqueda correspondiente (`toolBuscarGasto`, `toolBuscarResultado`, `toolBuscarRubroMensual`, `toolBuscarSueldos`, `toolBuscarEnHojaCruda`) — coincidencia de texto parcial, sin distinguir mayúsculas/acentos.
+4. El resultado se muestra como una lista de "cards" (una por coincidencia) con todos los campos relevantes ya formateados en pesos argentinos, más el total cuando corresponde. Si no hay coincidencias, se muestra un mensaje explícito en vez de inventar un dato.
 
-El system prompt le exige al modelo que solo responda con datos verificables por las tools, que use la tool más específica para cada tipo de consulta (y `buscar_en_hoja_cruda` solo como último recurso), que cite siempre la hoja y el mes de cada dato, y que diga explícitamente cuando no encuentra algo, en vez de inventar montos.
+## Historial
 
-**Nota:** el cambio de Claude a Gemini se hizo sin poder probar contra la API real de Gemini (este entorno no tiene salida de red hacia `generativelanguage.googleapis.com`) — se verificó el formato de la request/response y el loop de tool-use con mocks que imitan la forma documentada de la API (`contents`/`parts`/`functionCall`/`functionResponse`, `tools: [{functionDeclarations: [...]}]`), pero conviene probar una pregunta simple apenas esté la key configurada y revisar la consola del navegador si algo no responde bien.
+Este proyecto reemplazó una versión anterior con chat en lenguaje natural (primero con la API de Claude, después con la de Google Gemini como alternativa gratuita). Se sacó el LLM del medio por completo para no depender de ninguna API key ni de configuración de facturación — toda la lógica de búsqueda que antes usaban esas tools quedó intacta, solo cambió cómo se invoca (formularios en vez de una IA interpretando la pregunta).
