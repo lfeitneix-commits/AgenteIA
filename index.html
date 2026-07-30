@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Asistente de Gastos · Neix S.A.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --dark: #3D3D3D;
+    --red: #AB1930;
+    --bg: #F7F5F3;
+    --muted: #9A8E7D;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .mono { font-family: 'DM Mono', monospace; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--white);
+    border-bottom: 1px solid #E7E2DA;
+    flex-wrap: wrap;
+  }
+  header .titles h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+  header .titles p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .status-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .status-dot.ok { background: #4C7A4C; }
+  .status-dot.error { background: var(--red); }
+  .status-dot.loading { background: #C9A227; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  button.refresh-btn {
+    border: 1px solid var(--muted);
+    background: transparent;
+    color: var(--dark);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button.refresh-btn:hover { background: #EFEAE1; }
+  button.refresh-btn:disabled { opacity: .5; cursor: default; }
+
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .empty-state {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    max-width: 480px;
+  }
+  .empty-state h2 {
+    color: var(--dark);
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .empty-state .examples {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .empty-state .examples span {
+    background: var(--white);
+    border: 1px solid #E7E2DA;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .empty-state .examples span:hover { border-color: var(--red); }
+
+  .msg-row {
+    display: flex;
+    max-width: 80%;
+  }
+  .msg-row.user { align-self: flex-end; }
+  .msg-row.assistant { align-self: flex-start; }
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .msg-row.user .bubble {
+    background: var(--dark);
+    color: var(--white);
+    border-radius: 12px 12px 2px 12px;
+  }
+  .msg-row.assistant .bubble {
+    background: var(--white);
+    border: 1px solid #E7E2DA;
+    color: var(--dark);
+    border-radius: 12px 12px 12px 2px;
+  }
+  .msg-row.assistant .bubble.error {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .thinking-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .thinking-dots span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--muted);
+    margin-right: 2px;
+    animation: blink 1.2s infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: .2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2;} 40%{opacity:1;} }
+
+  footer {
+    padding: 12px 24px 20px;
+    background: var(--bg);
+    border-top: 1px solid #E7E2DA;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  textarea#chat-input {
+    flex: 1;
+    resize: none;
+    border: 1px solid #D8D2C6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--dark);
+    background: var(--white);
+    max-height: 120px;
+  }
+  textarea#chat-input:focus { outline: none; border-color: var(--red); }
+  button#send-btn {
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button#send-btn:disabled { opacity: .5; cursor: default; }
+  .foot-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin: 8px auto 0;
+    max-width: 900px;
+  }
+  .foot-note button.clear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 0;
+  }
+
+  main::-webkit-scrollbar { width: 8px; }
+  main::-webkit-scrollbar-thumb { background: #D8D2C6; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="titles">
+    <h1>Asistente de Gastos — Neix S.A.</h1>
+    <p id="data-summary">Cargando datos…</p>
+  </div>
+  <div class="status-area">
+    <span class="status-dot loading" id="status-dot"></span>
+    <span id="status-text">Cargando…</span>
+    <button class="refresh-btn" id="refresh-btn" title="Volver a cargar los datos desde Google Sheets">Actualizar datos</button>
+  </div>
+</header>
+
+<main id="chat-main">
+  <div class="empty-state" id="empty-state">
+    <h2>Preguntame sobre los gastos de Neix</h2>
+    <p>Consulto en vivo la Matriz de gastos, la Clasificación de gastos y las hojas de EERR. Solo respondo con datos que puedo verificar.</p>
+    <div class="examples">
+      <span data-example="¿Cuánto le pagamos a Tanoira en mayo?">¿Cuánto le pagamos a Tanoira en mayo?</span>
+      <span data-example="¿Cuáles son los totales por área en abril?">¿Cuáles son los totales por área en abril?</span>
+      <span data-example="Top 5 proveedores por gasto en el año">Top 5 proveedores por gasto en el año</span>
+      <span data-example="Comparar gastos fijos y variables entre marzo y abril">Comparar gastos fijos y variables entre marzo y abril</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="input-row">
+    <textarea id="chat-input" rows="1" placeholder="Preguntá por un proveedor, un mes, un área…"></textarea>
+    <button id="send-btn">Enviar</button>
+  </div>
+  <div class="foot-note">
+    Los montos se verifican contra los datos cargados de Google Sheets. Si no se encuentra un dato, el asistente lo va a decir en vez de inventarlo. · <button class="clear-btn" id="clear-btn">Borrar historial</button>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // CONFIG — completar antes de deployar
+  // ============================================================
+  // 1. En Google Sheets: Archivo > Compartir > Publicar en la Web > elegir la
+  //    hoja > formato CSV > Publicar. Repetir "hoja" por cada pestaña que
+  //    quieras usar (o publicar todo el documento y usar el gid de cada una).
+  // 2. Copiar la URL publicada. Tiene esta forma:
+  //    https://docs.google.com/spreadsheets/d/e/<ID_LARGO>/pub?gid=<GID>&single=true&output=csv
+  //    Reemplazar el <GID> por el literal "{GID}" en CSV_URL_TEMPLATE de abajo.
+  // 3. Completar el gid real de cada pestaña en GIDS (click en la pestaña en
+  //    Google Sheets y mirar el "gid=" en la URL del navegador).
+  const CONFIG = {
+    csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/REEMPLAZAR_ID_PUBLICADO/pub?gid={GID}&single=true&output=csv',
+    gids: {
+      matrizGastos: '44234235',
+      clasificacionGastos: '2122908998',
+      meses: {
+        enero: 'REEMPLAZAR_GID_ENERO',
+        febrero: 'REEMPLAZAR_GID_FEBRERO',
+        marzo: 'REEMPLAZAR_GID_MARZO',
+        abril: 'REEMPLAZAR_GID_ABRIL',
+        mayo: 'REEMPLAZAR_GID_MAYO',
+      },
+    },
+    apiEndpoint: '/api/chat',
+    model: 'claude-sonnet-5',
+  };
+
+  const PLACEHOLDER_MARKERS = ['REEMPLAZAR', 'TU_ID_PUBLICADO'];
+  function isPlaceholder(v) {
+    return !v || PLACEHOLDER_MARKERS.some((m) => v.includes(m));
+  }
+
+  // ============================================================
+  // Utilidades de texto y números
+  // ============================================================
+  const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+  const MES_ABREV = { ENE: 'ENERO', FEB: 'FEBRERO', MAR: 'MARZO', ABR: 'ABRIL', MAY: 'MAYO', JUN: 'JUNIO', JUL: 'JULIO', AGO: 'AGOSTO', SEP: 'SEPTIEMBRE', SET: 'SEPTIEMBRE', OCT: 'OCTUBRE', NOV: 'NOVIEMBRE', DIC: 'DICIEMBRE' };
+  const AREA_ALIASES = {
+    'MESA': ['MESA'],
+    'BANCA CORPORATIVA': ['BANCA CORPORATIVA', 'CORPORATIVA', 'CORP'],
+    'BANCA PRIVADA': ['BANCA PRIVADA', 'PRIVADA'],
+    'FAS': ['FAS', 'FINANCIAL ADVISORS', 'ASESORES FINANCIEROS'],
+  };
+
+  function normalizeText(s) {
+    return (s == null ? '' : String(s))
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function normalizeMes(input) {
+    if (!input) return null;
+    const s = normalizeText(input);
+    for (const m of MESES) { if (s.includes(m)) return m; }
+    const num = parseInt(s, 10);
+    if (!isNaN(num) && num >= 1 && num <= 12 && /^\d{1,2}([/-].*)?$/.test(s)) return MESES[num - 1];
+    for (const [ab, full] of Object.entries(MES_ABREV)) { if (s.startsWith(ab)) return full; }
+    return null;
+  }
+
+  function normalizeArea(input) {
+    if (!input) return null;
+    const s = normalizeText(input);
+    for (const [canon, aliases] of Object.entries(AREA_ALIASES)) {
+      if (aliases.some((a) => s.includes(normalizeText(a)))) return canon;
+    }
+    return s || null;
+  }
+
+  function matchProveedor(query, nombre) {
+    const q = normalizeText(query);
+    const n = normalizeText(nombre);
+    if (!q) return true;
+    if (!n) return false;
+    if (n.includes(q) || q.includes(n)) return true;
+    const qWords = q.split(' ').filter(Boolean);
+    return qWords.length > 0 && qWords.every((w) => n.includes(w));
+  }
+
+  // Parsea montos en formato argentino ($1.234.567,89), con separadores
+  // ambiguos, negativos entre paréntesis o con signo.
+  function parseMonto(raw) {
+    if (raw == null) return null;
+    let s = String(raw).trim();
+    if (s === '' || s === '-' || s === '.') return null;
+    let negative = false;
+    if (/^\(.*\)$/.test(s)) { negative = true; s = s.slice(1, -1); }
+    s = s.replace(/[^0-9.,-]/g, '');
+    if (s === '') return null;
+    if (s.startsWith('-')) { negative = true; s = s.slice(1); }
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma > -1 && lastDot > -1) {
+      if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+      else s = s.replace(/,/g, '');
+    } else if (lastComma > -1) {
+      const decimals = s.length - lastComma - 1;
+      s = decimals <= 2 ? s.replace(',', '.') : s.replace(/,/g, '');
+    } else if (lastDot > -1) {
+      const decimals = s.length - lastDot - 1;
+      if (decimals === 3) s = s.replace(/\./g, '');
+    }
+    const num = parseFloat(s);
+    if (isNaN(num)) return null;
+    return negative ? -num : num;
+  }
+
+  function formatARS(n) {
+    if (n == null || isNaN(n)) return null;
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
+  }
+
+  function findHeaderRow(rows, keywords) {
+    for (let i = 0; i < Math.min(rows.length, 12); i++) {
+      const norm = (rows[i] || []).map(normalizeText);
+      if (keywords.some((k) => norm.some((c) => c.includes(k)))) return i;
+    }
+    return -1;
+  }
+
+  // ============================================================
+  // Parsers adaptativos por hoja
+  // ============================================================
+  function parseMatrizGastos(rows) {
+    const headerRowIdx = findHeaderRow(rows, ['PROVEEDOR']);
+    if (headerRowIdx === -1) return { registros: [], rawGrid: rows };
+    const header = rows[headerRowIdx].map(normalizeText);
+    const idxProveedor = header.findIndex((h) => h.includes('PROVEEDOR'));
+    const idxConcepto = header.findIndex((h) => h.includes('CONCEPTO'));
+    const idxArea = header.findIndex((h) => h.includes('AREA'));
+    const idxMes = header.findIndex((h) => h === 'MES');
+    const idxMonto = header.findIndex((h) => h.includes('MONTO') || h.includes('IMPORTE'));
+    const monthCols = [];
+    header.forEach((h, i) => {
+      const mes = normalizeMes(h);
+      if (mes) monthCols.push({ idx: i, mes });
+    });
+
+    const registros = [];
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      if (row.every((c) => !(c || '').toString().trim())) continue;
+      const proveedorRaw = idxProveedor > -1 ? row[idxProveedor] : '';
+      const proveedor = (proveedorRaw || '').toString().trim();
+      if (!proveedor) continue;
+      const concepto = idxConcepto > -1 ? (row[idxConcepto] || '').toString().trim() : '';
+      const area = idxArea > -1 ? (row[idxArea] || '').toString().trim() : '';
+
+      if (idxMes > -1 && idxMonto > -1) {
+        const monto = parseMonto(row[idxMonto]);
+        const mes = normalizeMes(row[idxMes]);
+        if (monto != null && mes) registros.push({ proveedor, concepto, area, mes, monto });
+      } else if (monthCols.length > 0) {
+        for (const { idx, mes } of monthCols) {
+          const monto = parseMonto(row[idx]);
+          if (monto != null && monto !== 0) registros.push({ proveedor, concepto, area, mes, monto });
+        }
+      }
+    }
+    return { registros, rawGrid: rows };
+  }
+
+  function parseClasificacion(rows) {
+    const headerRowIdx = findHeaderRow(rows, ['FIJO', 'VARIABLE']);
+    const porMes = {};
+    if (headerRowIdx === -1) return { porMes, rawGrid: rows };
+    const header = rows[headerRowIdx].map(normalizeText);
+    const monthCols = [];
+    header.forEach((h, i) => { const mes = normalizeMes(h); if (mes) monthCols.push({ idx: i, mes }); });
+
+    if (monthCols.length > 0) {
+      for (let r = headerRowIdx + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const label = normalizeText(row[0]);
+        let key = null;
+        if (label.includes('FIJO')) key = 'fijo';
+        else if (label.includes('VARIABLE')) key = 'variable';
+        else if (label.includes('TOTAL')) key = 'total';
+        if (!key) continue;
+        for (const { idx, mes } of monthCols) {
+          const val = parseMonto(row[idx]);
+          if (val == null) continue;
+          porMes[mes] = porMes[mes] || {};
+          porMes[mes][key] = val;
+        }
+      }
+    } else {
+      const idxMes = header.findIndex((h) => h === 'MES');
+      const idxFijo = header.findIndex((h) => h.includes('FIJO'));
+      const idxVariable = header.findIndex((h) => h.includes('VARIABLE'));
+      const idxTotal = header.findIndex((h) => h.includes('TOTAL'));
+      for (let r = headerRowIdx + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const mes = normalizeMes(idxMes > -1 ? row[idxMes] : row[0]);
+        if (!mes) continue;
+        porMes[mes] = {
+          fijo: idxFijo > -1 ? parseMonto(row[idxFijo]) : null,
+          variable: idxVariable > -1 ? parseMonto(row[idxVariable]) : null,
+          total: idxTotal > -1 ? parseMonto(row[idxTotal]) : null,
+        };
+      }
+    }
+    return { porMes, rawGrid: rows };
+  }
+
+  function parseEERR(rows) {
+    const AREAS = Object.keys(AREA_ALIASES);
+    const headerRowIdx = findHeaderRow(rows, AREAS.flatMap((a) => AREA_ALIASES[a]));
+    const porArea = {};
+    if (headerRowIdx === -1) return { porArea, rawGrid: rows };
+    const header = rows[headerRowIdx].map(normalizeText);
+    const areaCols = [];
+    header.forEach((h, i) => {
+      const canon = AREAS.find((a) => AREA_ALIASES[a].some((alias) => h.includes(normalizeText(alias))));
+      if (canon) areaCols.push({ idx: i, area: canon });
+    });
+    if (areaCols.length === 0) return { porArea, rawGrid: rows };
+
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const label = normalizeText(row[0]);
+      let key = null;
+      if (label.includes('INGRESO')) key = 'ingresos';
+      else if (label.includes('EGRESO') || label.includes('GASTO')) key = 'egresos';
+      else if (label.includes('RESULTADO') || label.includes('UTILIDAD') || label.includes('GANANCIA')) key = 'resultado';
+      if (!key) continue;
+      for (const { idx, area } of areaCols) {
+        const val = parseMonto(row[idx]);
+        if (val == null) continue;
+        porArea[area] = porArea[area] || {};
+        porArea[area][key] = val;
+      }
+    }
+    return { porArea, rawGrid: rows };
+  }
+
+  // ============================================================
+  // Estado de datos
+  // ============================================================
+  const Data = {
+    gastos: [],           // [{proveedor, concepto, area, mes, monto}]
+    clasificacion: {},     // {MES: {fijo, variable, total}}
+    eerr: {},               // {MES: {porArea: {...}}}
+    lastLoaded: null,
+    loadErrors: [],
+  };
+
+  function fetchCsv(gid) {
+    const url = CONFIG.csvUrlTemplate.replace('{GID}', gid);
+    return fetch(url, { cache: 'no-store' })
+      .then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then((text) => {
+        const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
+        return parsed.data;
+      });
+  }
+
+  async function loadAllData() {
+    setStatus('loading', 'Cargando datos…');
+    Data.gastos = [];
+    Data.clasificacion = {};
+    Data.eerr = {};
+    Data.loadErrors = [];
+
+    const tasks = [];
+
+    if (!isPlaceholder(CONFIG.gids.matrizGastos)) {
+      tasks.push(
+        fetchCsv(CONFIG.gids.matrizGastos)
+          .then((rows) => { Data.gastos = parseMatrizGastos(rows).registros; })
+          .catch((e) => Data.loadErrors.push('Matriz de gastos: ' + e.message))
+      );
+    } else {
+      Data.loadErrors.push('Matriz de gastos: falta configurar la URL/gid en CONFIG');
+    }
+
+    if (!isPlaceholder(CONFIG.gids.clasificacionGastos)) {
+      tasks.push(
+        fetchCsv(CONFIG.gids.clasificacionGastos)
+          .then((rows) => { Data.clasificacion = parseClasificacion(rows).porMes; })
+          .catch((e) => Data.loadErrors.push('Clasificación de gastos: ' + e.message))
+      );
+    } else {
+      Data.loadErrors.push('Clasificación de gastos: falta configurar la URL/gid en CONFIG');
+    }
+
+    const mesesEntries = Object.entries(CONFIG.gids.meses || {});
+    for (const [nombreMes, gid] of mesesEntries) {
+      if (isPlaceholder(gid)) continue;
+      tasks.push(
+        fetchCsv(gid)
+          .then((rows) => {
+            const mesKey = normalizeMes(nombreMes) || normalizeText(nombreMes);
+            Data.eerr[mesKey] = parseEERR(rows);
+          })
+          .catch((e) => Data.loadErrors.push('EERR ' + nombreMes + ': ' + e.message))
+      );
+    }
+
+    await Promise.all(tasks);
+    Data.lastLoaded = new Date();
+    renderStatus();
+  }
+
+  function setStatus(kind, text) {
+    document.getElementById('status-dot').className = 'status-dot ' + kind;
+    document.getElementById('status-text').textContent = text;
+  }
+
+  function renderStatus() {
+    const nGastos = Data.gastos.length;
+    const nMesesEERR = Object.keys(Data.eerr).length;
+    const nClasif = Object.keys(Data.clasificacion).length;
+    const hayDatos = nGastos > 0 || nMesesEERR > 0 || nClasif > 0;
+
+    if (Data.loadErrors.length > 0 && !hayDatos) {
+      setStatus('error', 'Sin datos — revisar configuración');
+    } else if (Data.loadErrors.length > 0) {
+      setStatus('loading', 'Datos parciales');
+    } else {
+      setStatus('ok', 'Datos actualizados');
+    }
+
+    const summary = document.getElementById('data-summary');
+    const parts = [];
+    if (nGastos > 0) parts.push(nGastos + ' registros de gastos');
+    if (nMesesEERR > 0) parts.push(nMesesEERR + ' meses de EERR');
+    if (nClasif > 0) parts.push(nClasif + ' meses de clasificación fijo/variable');
+    const when = Data.lastLoaded ? Data.lastLoaded.toLocaleTimeString('es-AR') : '';
+    summary.textContent = (parts.length ? parts.join(' · ') : 'No se cargaron datos') + (when ? ' · actualizado ' + when : '');
+    if (Data.loadErrors.length > 0) {
+      summary.title = Data.loadErrors.join('\n');
+    }
+  }
+
+  // ============================================================
+  // Tools que Claude puede invocar
+  // ============================================================
+  const TOOLS = [
+    {
+      name: 'buscar_gasto',
+      description: 'Busca en la Matriz de gastos pagos a un proveedor, con coincidencia parcial (ej. "Tanoira" matchea "TANOIRA CASSAGNE"), opcionalmente filtrado por mes y/o área. Devuelve todas las coincidencias con proveedor, concepto, área, mes y monto exactos según los datos ya cargados.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          proveedor: { type: 'string', description: 'Nombre completo o parcial del proveedor (ej: "Tanoira")' },
+          mes: { type: 'string', description: 'Mes a filtrar, ej "mayo". Si se omite, busca en todos los meses cargados.' },
+          area: { type: 'string', description: 'Área a filtrar: Mesa, Banca Corporativa, Banca Privada o FAs. Opcional.' },
+        },
+        required: ['proveedor'],
+      },
+    },
+    {
+      name: 'totales_por_area',
+      description: 'Devuelve los totales de ingresos, egresos y resultado por área (Mesa, Banca Corporativa, Banca Privada, FAs) para un mes dado, según las hojas de EERR. Si se omite el mes, devuelve todos los meses cargados para poder comparar.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          mes: { type: 'string', description: 'Mes a consultar, ej "mayo". Opcional.' },
+        },
+      },
+    },
+    {
+      name: 'top_proveedores',
+      description: 'Devuelve el ranking de proveedores con mayor gasto total según la Matriz de gastos, opcionalmente filtrado por mes y/o área.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          mes: { type: 'string', description: 'Mes a filtrar. Opcional, si se omite usa todos los meses cargados.' },
+          area: { type: 'string', description: 'Área a filtrar. Opcional.' },
+          n: { type: 'integer', description: 'Cantidad de proveedores a devolver. Default 10.' },
+        },
+      },
+    },
+    {
+      name: 'gastos_fijos_variables',
+      description: 'Devuelve los totales de gastos fijos y variables para un mes, según la hoja Clasificación de gastos. Si se omite el mes, devuelve todos los meses cargados para comparar.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          mes: { type: 'string', description: 'Mes a consultar. Opcional.' },
+        },
+      },
+    },
+    {
+      name: 'meses_disponibles',
+      description: 'Devuelve qué meses hay realmente cargados en cada hoja (Matriz de gastos, EERR, Clasificación). Usar esto antes de asumir que un mes está disponible.',
+      input_schema: { type: 'object', properties: {} },
+    },
+  ];
+
+  function toolBuscarGasto({ proveedor, mes, area }) {
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    const areaNorm = area ? normalizeArea(area) : null;
+    const matches = Data.gastos.filter((g) => {
+      if (!matchProveedor(proveedor, g.proveedor)) return false;
+      if (mesNorm && g.mes !== mesNorm) return false;
+      if (areaNorm && normalizeArea(g.area) !== areaNorm) return false;
+      return true;
+    });
+    if (matches.length === 0) {
+      return {
+        encontrado: false,
+        mensaje: 'No se encontró ningún pago a un proveedor que coincida con "' + proveedor + '"' +
+          (mes ? ' en ' + mes : '') + (area ? ' en el área ' + area : '') + ' en la Matriz de gastos.',
+      };
+    }
+    return {
+      encontrado: true,
+      fuente: 'Matriz de gastos',
+      resultados: matches.map((g) => ({
+        proveedor: g.proveedor, concepto: g.concepto, area: g.area, mes: g.mes,
+        monto: g.monto, monto_formateado: formatARS(g.monto),
+      })),
+      total: matches.reduce((sum, g) => sum + g.monto, 0),
+      total_formateado: formatARS(matches.reduce((sum, g) => sum + g.monto, 0)),
+    };
+  }
+
+  function toolTotalesPorArea({ mes }) {
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    const mesesData = mesNorm ? [mesNorm] : Object.keys(Data.eerr);
+    const out = {};
+    for (const m of mesesData) {
+      if (Data.eerr[m]) out[m] = Data.eerr[m].porArea;
+    }
+    if (Object.keys(out).length === 0) {
+      return { encontrado: false, mensaje: mes ? 'No hay datos de EERR cargados para ' + mes + '.' : 'No hay datos de EERR cargados.' };
+    }
+    return { encontrado: true, fuente: 'Hojas de EERR', datos: out };
+  }
+
+  function toolTopProveedores({ mes, area, n }) {
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    const areaNorm = area ? normalizeArea(area) : null;
+    const filtered = Data.gastos.filter((g) => {
+      if (mesNorm && g.mes !== mesNorm) return false;
+      if (areaNorm && normalizeArea(g.area) !== areaNorm) return false;
+      return true;
+    });
+    const totals = {};
+    for (const g of filtered) totals[g.proveedor] = (totals[g.proveedor] || 0) + g.monto;
+    const ranking = Object.entries(totals)
+      .map(([proveedor, total]) => ({ proveedor, total, total_formateado: formatARS(total) }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, n || 10);
+    if (ranking.length === 0) {
+      return { encontrado: false, mensaje: 'No se encontraron gastos con esos filtros en la Matriz de gastos.' };
+    }
+    return { encontrado: true, fuente: 'Matriz de gastos', ranking };
+  }
+
+  function toolGastosFijosVariables({ mes }) {
+    const mesNorm = mes ? normalizeMes(mes) : null;
+    const meses = mesNorm ? [mesNorm] : Object.keys(Data.clasificacion);
+    const out = {};
+    for (const m of meses) if (Data.clasificacion[m]) out[m] = Data.clasificacion[m];
+    if (Object.keys(out).length === 0) {
+      return { encontrado: false, mensaje: mes ? 'No hay datos de Clasificación de gastos para ' + mes + '.' : 'No hay datos de Clasificación de gastos cargados.' };
+    }
+    return { encontrado: true, fuente: 'Clasificación de gastos', datos: out };
+  }
+
+  function toolMesesDisponibles() {
+    return {
+      meses_con_gastos: [...new Set(Data.gastos.map((g) => g.mes))],
+      meses_con_eerr: Object.keys(Data.eerr),
+      meses_con_clasificacion: Object.keys(Data.clasificacion),
+    };
+  }
+
+  function executeTool(name, input) {
+    try {
+      switch (name) {
+        case 'buscar_gasto': return toolBuscarGasto(input || {});
+        case 'totales_por_area': return toolTotalesPorArea(input || {});
+        case 'top_proveedores': return toolTopProveedores(input || {});
+        case 'gastos_fijos_variables': return toolGastosFijosVariables(input || {});
+        case 'meses_disponibles': return toolMesesDisponibles();
+        default: return { error: 'Tool desconocida: ' + name };
+      }
+    } catch (e) {
+      return { error: 'Error ejecutando la tool: ' + e.message };
+    }
+  }
+
+  // ============================================================
+  // Chat: system prompt, historial, loop de tool-use
+  // ============================================================
+  const SYSTEM_PROMPT = [
+    'Sos el asistente financiero interno de Neix S.A.',
+    'Tu única fuente de verdad son los resultados que devuelven las tools disponibles (buscar_gasto, totales_por_area, top_proveedores, gastos_fijos_variables, meses_disponibles). Esas tools consultan datos reales, ya cargados en el navegador desde los Google Sheets de Neix (Matriz de gastos, Clasificación de gastos, hojas mensuales de EERR).',
+    'Nunca inventes ni estimes montos, proveedores, meses o áreas. Si una tool devuelve encontrado:false o no tenés datos suficientes, decilo explícitamente (por ejemplo: "No encontré ese dato en la Matriz de gastos") en vez de aproximar o suponer.',
+    'Cuando respondas con un monto, indicá siempre: el monto exacto en pesos, el mes correspondiente y la fuente (nombre de la hoja) de donde proviene el dato. Ejemplo: "En mayo se le pagó $1.234.567 a Tanoira Cassagne, según la Matriz de gastos."',
+    'Si hay varias coincidencias parciales para un proveedor, mostralas todas y aclará que son coincidencias parciales, no asumas cuál es la correcta.',
+    'Si el usuario pregunta por un mes que no está cargado, usá meses_disponibles para confirmarlo y avisale cuáles meses sí están disponibles.',
+    'Sé conciso, directo y profesional. No agregues disclaimers innecesarios ni inventes contexto que no te dieron.',
+  ].join(' ');
+
+  const HISTORY_KEY = 'neix-gastos-chat-history';
+  let conversation = loadHistory();
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(conversation)); } catch (e) { /* ignore */ }
+  }
+
+  const chatMain = document.getElementById('chat-main');
+  const emptyState = document.getElementById('empty-state');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+
+  function extractText(content) {
+    if (typeof content === 'string') return content;
+    if (!Array.isArray(content)) return '';
+    return content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+  }
+
+  function renderConversation() {
+    chatMain.innerHTML = '';
+    const visible = conversation.filter((m) => m.role === 'user' || m.role === 'assistant');
+    if (visible.length === 0) {
+      chatMain.appendChild(emptyState);
+      return;
+    }
+    for (const m of visible) {
+      const text = extractText(m.content);
+      if (!text.trim()) continue;
+      appendBubble(m.role, text, false);
+    }
+    chatMain.scrollTop = chatMain.scrollHeight;
+  }
+
+  function appendBubble(role, text, isError) {
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble' + (isError ? ' error' : '');
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatMain.appendChild(row);
+    chatMain.scrollTop = chatMain.scrollHeight;
+    return row;
+  }
+
+  function appendThinking() {
+    const row = document.createElement('div');
+    row.className = 'msg-row assistant';
+    row.id = 'thinking-row';
+    row.innerHTML = '<div class="bubble thinking-bubble"><span class="thinking-dots"><span></span><span></span><span></span></span>Consultando datos…</div>';
+    chatMain.appendChild(row);
+    chatMain.scrollTop = chatMain.scrollHeight;
+  }
+
+  function removeThinking() {
+    const el = document.getElementById('thinking-row');
+    if (el) el.remove();
+  }
+
+  async function callClaude(messages) {
+    const res = await fetch(CONFIG.apiEndpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ system: SYSTEM_PROMPT, messages, tools: TOOLS, model: CONFIG.model }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const detail = (data && (data.error && data.error.message || data.error)) || ('HTTP ' + res.status);
+      throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    }
+    return data;
+  }
+
+  const MAX_TOOL_ROUNDS = 6;
+
+  async function runTurn() {
+    appendThinking();
+    try {
+      let rounds = 0;
+      let response = await callClaude(conversation);
+
+      while (response.stop_reason === 'tool_use' && rounds < MAX_TOOL_ROUNDS) {
+        rounds++;
+        conversation.push({ role: 'assistant', content: response.content });
+
+        const toolResults = [];
+        for (const block of response.content) {
+          if (block.type === 'tool_use') {
+            const result = executeTool(block.name, block.input);
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: block.id,
+              content: JSON.stringify(result),
+            });
+          }
+        }
+        conversation.push({ role: 'user', content: toolResults });
+        saveHistory();
+        response = await callClaude(conversation);
+      }
+
+      conversation.push({ role: 'assistant', content: response.content });
+      saveHistory();
+      removeThinking();
+      const text = extractText(response.content) || '(sin respuesta de texto)';
+      appendBubble('assistant', text, false);
+    } catch (err) {
+      removeThinking();
+      appendBubble('assistant', 'Ocurrió un error al consultar al asistente: ' + err.message, true);
+    }
+  }
+
+  function sendMessage(text) {
+    if (!text.trim()) return;
+    conversation.push({ role: 'user', content: text.trim() });
+    saveHistory();
+    if (chatMain.contains(emptyState)) emptyState.remove();
+    appendBubble('user', text.trim(), false);
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    chatInput.disabled = true;
+    runTurn().finally(() => {
+      sendBtn.disabled = false;
+      chatInput.disabled = false;
+      chatInput.focus();
+    });
+  }
+
+  sendBtn.addEventListener('click', () => sendMessage(chatInput.value));
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(chatInput.value);
+    }
+  });
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  });
+
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (!confirm('¿Borrar todo el historial de la conversación?')) return;
+    conversation = [];
+    saveHistory();
+    renderConversation();
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    await loadAllData();
+    e.target.disabled = false;
+  });
+
+  document.querySelectorAll('.empty-state .examples span').forEach((el) => {
+    el.addEventListener('click', () => sendMessage(el.getAttribute('data-example')));
+  });
+
+  // ============================================================
+  // Init
+  // ============================================================
+  renderConversation();
+  loadAllData();
+})();
+</script>
+</body>
+</html>
