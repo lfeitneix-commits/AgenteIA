@@ -283,16 +283,19 @@
   // 3. Completar el gid real de cada pestaña en GIDS (click en la pestaña en
   //    Google Sheets y mirar el "gid=" en la URL del navegador).
   const CONFIG = {
-    csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/REEMPLAZAR_ID_PUBLICADO/pub?gid={GID}&single=true&output=csv',
+    csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?gid={GID}&single=true&output=csv',
     gids: {
       matrizGastos: '44234235',
       clasificacionGastos: '2122908998',
+      // "consolidado" es la hoja con los totales acumulados de EERR del período
+      // completo (no es un mes puntual) — se expone como el mes especial "CONSOLIDADO".
+      consolidado: '820949426',
       meses: {
-        enero: 'REEMPLAZAR_GID_ENERO',
-        febrero: 'REEMPLAZAR_GID_FEBRERO',
-        marzo: 'REEMPLAZAR_GID_MARZO',
-        abril: 'REEMPLAZAR_GID_ABRIL',
-        mayo: 'REEMPLAZAR_GID_MAYO',
+        enero: '226754153',
+        febrero: '1511706532',
+        marzo: '1921579671',
+        abril: '921185054',
+        mayo: '1385764727',
       },
     },
     apiEndpoint: '/api/chat',
@@ -324,6 +327,10 @@
       .trim();
   }
 
+  // Alias que representan el período acumulado (no un mes puntual) — mapean
+  // al pseudo-mes especial "CONSOLIDADO", cargado desde CONFIG.gids.consolidado.
+  const CONSOLIDADO_ALIASES = ['CONSOLIDADO', 'ACUMULADO', 'ANUAL', 'TOTAL', 'AÑO', 'PERIODO', 'PERÍODO'];
+
   function normalizeMes(input) {
     if (!input) return null;
     const s = normalizeText(input);
@@ -331,6 +338,7 @@
     const num = parseInt(s, 10);
     if (!isNaN(num) && num >= 1 && num <= 12 && /^\d{1,2}([/-].*)?$/.test(s)) return MESES[num - 1];
     for (const [ab, full] of Object.entries(MES_ABREV)) { if (s.startsWith(ab)) return full; }
+    if (CONSOLIDADO_ALIASES.some((a) => s.includes(normalizeText(a)))) return 'CONSOLIDADO';
     return null;
   }
 
@@ -437,14 +445,21 @@
   }
 
   function parseClasificacion(rows) {
-    const headerRowIdx = findHeaderRow(rows, ['FIJO', 'VARIABLE']);
     const porMes = {};
-    if (headerRowIdx === -1) return { porMes, rawGrid: rows };
-    const header = rows[headerRowIdx].map(normalizeText);
-    const monthCols = [];
-    header.forEach((h, i) => { const mes = normalizeMes(h); if (mes) monthCols.push({ idx: i, mes }); });
 
-    if (monthCols.length > 0) {
+    // Caso A: filas = Fijo/Variable/Total, columnas = meses. Buscamos la fila
+    // de encabezado por sus nombres de mes (no por "Fijo"/"Variable", que
+    // aparecen en las filas de datos, no en el encabezado).
+    let headerRowIdx = -1;
+    let monthCols = [];
+    for (let i = 0; i < Math.min(rows.length, 6); i++) {
+      const header = (rows[i] || []).map(normalizeText);
+      const cols = [];
+      header.forEach((h, idx) => { const mes = normalizeMes(h); if (mes) cols.push({ idx, mes }); });
+      if (cols.length >= 2) { headerRowIdx = i; monthCols = cols; break; }
+    }
+
+    if (headerRowIdx > -1) {
       for (let r = headerRowIdx + 1; r < rows.length; r++) {
         const row = rows[r] || [];
         const label = normalizeText(row[0]);
@@ -460,21 +475,26 @@
           porMes[mes][key] = val;
         }
       }
-    } else {
-      const idxMes = header.findIndex((h) => h === 'MES');
-      const idxFijo = header.findIndex((h) => h.includes('FIJO'));
-      const idxVariable = header.findIndex((h) => h.includes('VARIABLE'));
-      const idxTotal = header.findIndex((h) => h.includes('TOTAL'));
-      for (let r = headerRowIdx + 1; r < rows.length; r++) {
-        const row = rows[r] || [];
-        const mes = normalizeMes(idxMes > -1 ? row[idxMes] : row[0]);
-        if (!mes) continue;
-        porMes[mes] = {
-          fijo: idxFijo > -1 ? parseMonto(row[idxFijo]) : null,
-          variable: idxVariable > -1 ? parseMonto(row[idxVariable]) : null,
-          total: idxTotal > -1 ? parseMonto(row[idxTotal]) : null,
-        };
-      }
+      return { porMes, rawGrid: rows };
+    }
+
+    // Caso B: columnas = Mes, Fijo, Variable, Total (una fila por mes).
+    const headerRowIdxB = findHeaderRow(rows, ['FIJO', 'VARIABLE']);
+    if (headerRowIdxB === -1) return { porMes, rawGrid: rows };
+    const header = rows[headerRowIdxB].map(normalizeText);
+    const idxMes = header.findIndex((h) => h === 'MES');
+    const idxFijo = header.findIndex((h) => h.includes('FIJO'));
+    const idxVariable = header.findIndex((h) => h.includes('VARIABLE'));
+    const idxTotal = header.findIndex((h) => h.includes('TOTAL'));
+    for (let r = headerRowIdxB + 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const mes = normalizeMes(idxMes > -1 ? row[idxMes] : row[0]);
+      if (!mes) continue;
+      porMes[mes] = {
+        fijo: idxFijo > -1 ? parseMonto(row[idxFijo]) : null,
+        variable: idxVariable > -1 ? parseMonto(row[idxVariable]) : null,
+        total: idxTotal > -1 ? parseMonto(row[idxTotal]) : null,
+      };
     }
     return { porMes, rawGrid: rows };
   }
@@ -576,6 +596,14 @@
       );
     }
 
+    if (!isPlaceholder(CONFIG.gids.consolidado)) {
+      tasks.push(
+        fetchCsv(CONFIG.gids.consolidado)
+          .then((rows) => { Data.eerr.CONSOLIDADO = parseEERR(rows); })
+          .catch((e) => Data.loadErrors.push('EERR Consolidado: ' + e.message))
+      );
+    }
+
     await Promise.all(tasks);
     Data.lastLoaded = new Date();
     renderStatus();
@@ -631,11 +659,11 @@
     },
     {
       name: 'totales_por_area',
-      description: 'Devuelve los totales de ingresos, egresos y resultado por área (Mesa, Banca Corporativa, Banca Privada, FAs) para un mes dado, según las hojas de EERR. Si se omite el mes, devuelve todos los meses cargados para poder comparar.',
+      description: 'Devuelve los totales de ingresos, egresos y resultado por área (Mesa, Banca Corporativa, Banca Privada, FAs) para un mes dado, según las hojas de EERR. Si se omite el mes, devuelve todos los meses cargados para poder comparar. También existe el pseudo-mes "consolidado" (o "acumulado"/"total"), que trae los totales del período completo desde la hoja Consolidado, no de un mes puntual.',
       input_schema: {
         type: 'object',
         properties: {
-          mes: { type: 'string', description: 'Mes a consultar, ej "mayo". Opcional.' },
+          mes: { type: 'string', description: 'Mes a consultar, ej "mayo", o "consolidado" para el acumulado del período completo. Opcional.' },
         },
       },
     },
@@ -745,6 +773,7 @@
       meses_con_gastos: [...new Set(Data.gastos.map((g) => g.mes))],
       meses_con_eerr: Object.keys(Data.eerr),
       meses_con_clasificacion: Object.keys(Data.clasificacion),
+      nota: '"CONSOLIDADO" no es un mes puntual: son los totales acumulados del período completo, según la hoja Consolidado.',
     };
   }
 
@@ -773,6 +802,7 @@
     'Cuando respondas con un monto, indicá siempre: el monto exacto en pesos, el mes correspondiente y la fuente (nombre de la hoja) de donde proviene el dato. Ejemplo: "En mayo se le pagó $1.234.567 a Tanoira Cassagne, según la Matriz de gastos."',
     'Si hay varias coincidencias parciales para un proveedor, mostralas todas y aclará que son coincidencias parciales, no asumas cuál es la correcta.',
     'Si el usuario pregunta por un mes que no está cargado, usá meses_disponibles para confirmarlo y avisale cuáles meses sí están disponibles.',
+    '"CONSOLIDADO" es un pseudo-mes especial (también aceptás "acumulado" o "total") que representa los totales de EERR del período completo cargado hasta el momento, según la hoja Consolidado — no confundirlo con un mes puntual.',
     'Sé conciso, directo y profesional. No agregues disclaimers innecesarios ni inventes contexto que no te dieron.',
   ].join(' ');
 

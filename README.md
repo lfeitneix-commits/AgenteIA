@@ -24,23 +24,23 @@ Para cada hoja que se quiera usar (EERR de cada mes, Matriz de gastos, Clasifica
 
 4. El `gid` es el identificador de cada pestaña — se puede ver en la URL del navegador al hacer click en la pestaña dentro de Google Sheets normal (no la publicada).
 
-## 2. Configurar `index.html`
+## 2. Configuración actual en `index.html`
 
-Abrir `index.html` y buscar el bloque `CONFIG` (cerca de la línea 260). Completar:
+El bloque `CONFIG` (cerca de la línea 285) ya está completado con el sheet de Neix:
 
 ```js
 const CONFIG = {
-  csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/TU_ID_PUBLICADO/pub?gid={GID}&single=true&output=csv',
+  csvUrlTemplate: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?gid={GID}&single=true&output=csv',
   gids: {
     matrizGastos: '44234235',
     clasificacionGastos: '2122908998',
+    consolidado: '820949426',
     meses: {
-      enero: 'GID_DE_ENERO',
-      febrero: 'GID_DE_FEBRERO',
-      marzo: 'GID_DE_MARZO',
-      abril: 'GID_DE_ABRIL',
-      mayo: 'GID_DE_MAYO',
-      // agregar los meses que se vayan sumando
+      enero: '226754153',
+      febrero: '1511706532',
+      marzo: '1921579671',
+      abril: '921185054',
+      mayo: '1385764727',
     },
   },
   apiEndpoint: '/api/chat',
@@ -48,9 +48,10 @@ const CONFIG = {
 };
 ```
 
-- `csvUrlTemplate`: pegar la URL publicada dejando literalmente `{GID}` donde va el número de gid (el código lo reemplaza en cada fetch).
-- `gids.matrizGastos` / `gids.clasificacionGastos`: ya vienen con los GID que pasaste (44234235 y 2122908998). Verificar que coincidan con tu sheet.
-- `gids.meses`: agregar una entrada por cada hoja mensual de EERR.
+- `csvUrlTemplate` se derivó de la URL publicada (`.../pub` en vez de `.../pubhtml`) agregando los parámetros `?gid={GID}&single=true&output=csv`. El `{GID}` se reemplaza en cada fetch.
+- `gids.consolidado` es la hoja con los totales acumulados de EERR de todo el período (no es un mes puntual). El asistente la expone como el pseudo-mes especial **"consolidado"** (también acepta "acumulado" o "total") — por ejemplo: *"¿cuál es el resultado consolidado por área?"*.
+- A medida que se agreguen meses nuevos (Junio, Julio, ...), agregar una entrada más en `gids.meses` con el gid de esa pestaña.
+- **No pude verificar el fetch en vivo contra este sheet específico** porque el entorno donde armé esta app no tiene salida de red hacia `docs.google.com` (solo hacia unos pocos dominios permitidos). Sí probé exhaustivamente los parsers (`parseMatrizGastos`, `parseClasificacion`, `parseEERR`) con CSVs sintéticos que imitan la estructura esperada — incluyendo formato ancho y largo de la Matriz de gastos, y ambas variantes de la hoja de Clasificación (meses en filas o en columnas) — y con Playwright headless para confirmar que la interfaz no tira errores de JS. Antes de usarla en producción, abrí la app, mandá una pregunta simple ("¿qué meses hay disponibles?") y confirmá que los montos que devuelve coinciden con el sheet real. Si algo no calza, son los parsers adaptativos los que hay que ajustar (están comentados en `index.html`).
 
 Si un gid queda con el placeholder (`REEMPLAZAR_...`), el asistente simplemente no va a cargar esa hoja y lo va a mostrar en el estado de arriba del chat — no rompe nada, pero esa fuente de datos no estará disponible hasta completarla.
 
