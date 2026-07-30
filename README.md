@@ -1,14 +1,14 @@
 # Asistente de Gastos — Neix S.A.
 
-Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". Usa la API de **Google Gemini** (gratis vía Google AI Studio, sin tarjeta) con function calling: el modelo interpreta la pregunta e invoca funciones que corren en el navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
+Chatbot interno que responde preguntas sobre los gastos de Neix consultando en vivo el Google Sheet "Resultados por área 2026". El modelo de IA corre **100% en el navegador** (vía [WebLLM](https://github.com/mlc-ai/web-llm) + WebGPU): no hay API externa, no hay backend, no hay API key que configurar ni cuenta que crear. El modelo interpreta la pregunta e invoca funciones que corren en el propio navegador contra los datos ya parseados del CSV (nunca se le manda el Excel completo en el prompt).
 
 ## Estructura
 
 ```
-index.html      → interfaz de chat completa (HTML+CSS+JS, un solo archivo)
-api/chat.js      → función serverless de Vercel que hace de proxy a la API de Gemini
-                   (guarda la API key del lado del servidor, nunca en el browser)
+index.html      → toda la app (HTML+CSS+JS, un solo archivo, sin build ni backend)
 ```
+
+No hay carpeta `api/` ni variables de entorno: es un sitio 100% estático. Se puede servir desde cualquier hosting estático (Vercel, Netlify, GitHub Pages) o abrir localmente.
 
 ## Fuente de datos: "Resultados por área 2026"
 
@@ -50,8 +50,6 @@ const CONFIG = {
     sueldosYCS: '987036881',
     hojasCrudas: { resultados: '1908736161', matrizGastos: '44234235' },
   },
-  apiEndpoint: '/api/chat',
-  model: 'gemini-2.5-flash',
 };
 ```
 
@@ -73,44 +71,40 @@ Los parsers dentro de `index.html` son adaptativos (detectan encabezados por nom
 
 Si la estructura real de alguna pestaña difiere de esto, estas funciones son las únicas que dependen del layout exacto del sheet.
 
-## 3. Conseguir una API key de Gemini (gratis)
+## 3. El modelo de IA (WebLLM, sin API)
 
-1. Entrar a **[aistudio.google.com](https://aistudio.google.com)** con una cuenta de Google.
-2. **Get API key → Create API key**. No pide tarjeta para el tier gratuito.
-3. Copiar la key (algo como `AIzaSy...`).
+No hace falta ninguna key ni cuenta. `index.html` carga [WebLLM](https://github.com/mlc-ai/web-llm) desde un CDN (`https://esm.run/@mlc-ai/web-llm`) con `import()` dinámico, y corre el modelo `Llama-3.2-3B-Instruct-q4f32_1-MLC` enteramente en el navegador vía WebGPU.
 
-El tier gratuito tiene límites de requests por minuto/día (varían según el modelo); para el uso esporádico de un chatbot interno debería alcanzar sin problema. Si en algún momento se necesita más volumen, se puede habilitar facturación en el mismo proyecto de Google Cloud sin cambiar nada del código.
+- **Requiere un navegador con WebGPU** (Chrome/Edge recientes; Safari/Firefox tienen soporte parcial o nulo según versión).
+- **La primera vez** que se abre la página, el navegador descarga los pesos del modelo (unos ~2 GB) desde Hugging Face — se ve una barra de progreso arriba del chat mientras tanto. Después queda cacheado por el navegador y las siguientes visitas arrancan rápido.
+- **Toda la inferencia es local**: nada de lo que se pregunta ni de los datos financieros sale de la computadora de quien lo usa.
+- Para cambiar de modelo (uno más grande/preciso pero más pesado, o más chico/liviano pero menos preciso), basta con cambiar el valor de `WEBLLM_MODEL_ID` en `index.html` por otro id de la lista de modelos soportados por WebLLM (`prebuiltAppConfig.model_list` en su repo).
 
-El navegador **nunca** llama directo a `generativelanguage.googleapis.com` — llama a `/api/chat`, que corre en el servidor de Vercel y ahí sí usa la key. Esto evita exponer la API key en el código fuente que cualquiera puede ver en el navegador.
+### Cómo se invocan las tools sin function calling nativo
 
-En Vercel: **Project Settings → Environment Variables** → agregar:
+A diferencia de Gemini/Claude, no hay una API de "tool use" estructurada para modelos corriendo localmente en WebLLM del tamaño que usamos acá. En su lugar se usa un esquema tipo ReAct por prompt:
 
-```
-GEMINI_API_KEY = AIzaSy...
-```
+1. El system prompt le describe al modelo las 6 tools disponibles (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles`) y le pide que, si necesita una, responda con un JSON de una sola línea: `{"tool": "...", "args": {...}}`.
+2. El frontend detecta ese JSON en la respuesta del modelo (`parseToolCall`), ejecuta la función real correspondiente contra los datos ya cargados, y le manda el resultado de vuelta al modelo como un mensaje de usuario que arranca con `Resultado de la tool "...":`.
+3. El modelo responde entonces en texto plano con la respuesta final. Ese ida y vuelta interno (el JSON pedido y el resultado) se guarda en el historial pero se marca `hidden: true` para no mostrarlo en el chat — solo se ve la pregunta y la respuesta final.
+4. Se acotan los rounds de tool-use a 4 por turno (`MAX_TOOL_ROUNDS`) para no quedar en loop si el modelo insiste en pedir tools.
 
-Redeployar después de agregarla.
+Este esquema es más frágil que el function calling nativo de un modelo grande en la nube: un modelo de 3B parámetros puede a veces no respetar el formato JSON exacto, inventar un nombre de tool que no existe, o directamente no darse cuenta de que necesita una tool. El código tolera bastante (busca cualquier `{...}` en el texto, no exige que sea *todo* el mensaje), pero no es infalible — si el chat responde raro, probá reformular la pregunta de forma más directa (ej. "buscá gastos de Tanoira en mayo" en vez de una pregunta larga y ambigua).
 
-## 4. Deploy en Vercel
+## Deploy
 
-Igual que tus otros proyectos: conectar el repo a Vercel (o `vercel --prod` desde la CLI). No hace falta configuración adicional — Vercel detecta automáticamente `index.html` como estático y `api/chat.js` como función serverless.
+Es un archivo estático, ninguna configuración especial:
 
-Para probar en local con `vercel dev` (requiere `vercel login` y tener `GEMINI_API_KEY` en un `.env.local`):
-
-```bash
-npm i -g vercel
-vercel dev
-```
+- **Vercel / Netlify**: conectar el repo, listo.
+- **GitHub Pages**: activarlo apuntando a `index.html`.
+- **Local**: abrir el archivo directo, o `python3 -m http.server` y entrar a `localhost:8000`.
 
 ## Cómo funciona
 
-1. Al cargar la página, `index.html` hace fetch de cada CSV publicado y los parsea con PapaParse (vía CDN) en memoria — no hay backend de datos, todo vive en el navegador de cada sesión.
-2. El usuario escribe una pregunta. El frontend manda el historial de la conversación (formato Gemini: `contents` con `role: 'user'|'model'` y `parts`) + la lista de tools (`functionDeclarations`) a `/api/chat`.
-3. `/api/chat` reenvía la llamada a `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` con el modelo `gemini-2.5-flash`, agregando la API key del servidor vía el header `x-goog-api-key`.
-4. Si Gemini decide invocar una tool (`buscar_gasto`, `buscar_resultado`, `buscar_rubro_mensual`, `buscar_sueldos`, `buscar_en_hoja_cruda`, `meses_disponibles` — le llegan como `functionCall` dentro de la respuesta), la función correspondiente corre **en el navegador** contra los datos ya cargados, y el resultado se le manda de vuelta a Gemini como una parte `functionResponse`.
-5. Este loop se repite hasta que Gemini responde con texto final, que se muestra en el chat.
-6. El historial de la conversación se guarda en `localStorage` del navegador (sin login, uso personal) bajo la clave `neix-gastos-chat-history-v2`.
+1. Al cargar la página, `index.html` hace fetch de cada CSV publicado (los 17 gids de `CONFIG`) y los parsea con PapaParse (vía CDN) en memoria.
+2. En paralelo, descarga (o recupera de caché) el modelo WebLLM y lo inicializa — se ve el progreso en una barra arriba del chat. Hasta que esto termina, la caja de texto queda deshabilitada.
+3. El usuario escribe una pregunta. Se manda todo el historial + el system prompt al modelo local (`engine.chat.completions.create`).
+4. Si el modelo pide una tool (JSON `{"tool": ..., "args": ...}`), se ejecuta la función real (`buscar_gasto`, etc.) contra los datos ya cargados, y el resultado se le devuelve al modelo para que arme la respuesta final.
+5. La respuesta final se muestra en el chat. El historial se guarda en `localStorage` (clave `neix-gastos-chat-history-v3`, sin login, uso personal).
 
-El system prompt le exige al modelo que solo responda con datos verificables por las tools, que use la tool más específica para cada tipo de consulta (y `buscar_en_hoja_cruda` solo como último recurso), que cite siempre la hoja y el mes de cada dato, y que diga explícitamente cuando no encuentra algo, en vez de inventar montos.
-
-**Nota:** el cambio de Claude a Gemini se hizo sin poder probar contra la API real de Gemini (este entorno no tiene salida de red hacia `generativelanguage.googleapis.com`) — se verificó el formato de la request/response y el loop de tool-use con mocks que imitan la forma documentada de la API (`contents`/`parts`/`functionCall`/`functionResponse`, `tools: [{functionDeclarations: [...]}]`), pero conviene probar una pregunta simple apenas esté la key configurada y revisar la consola del navegador si algo no responde bien.
+**Nota:** este entorno no tiene salida de red hacia el CDN de WebLLM ni GPU, así que no se pudo probar la carga real del modelo ni la calidad de sus respuestas — se verificó toda la lógica (el loop de tool-use, el parseo del JSON, qué se guarda/oculta en el historial, que la UI no tire errores) con un motor simulado que imita la forma de la respuesta real de WebLLM. Antes de darlo por andando, abrilo en Chrome o Edge, esperá a que la barra de progreso termine, y probá una pregunta simple.
