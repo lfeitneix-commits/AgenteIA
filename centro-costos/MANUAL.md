@@ -127,27 +127,17 @@ Regla general de resolución, en este orden:
 
 ## 4. "Primera matriz" — reparto por área interna (staff)
 
-| Área de staff | Mesa | FAs+Mza | Banca Corp. | Banca Priv. | Criterio |
-|---|---|---|---|---|---|
-| Back Office | 60% | 30% | 5% | 5% | Operaciones del área / Operaciones totales |
-| RRHH | 58% | 14% | 17% | 11% | Headcount del área / Headcount total |
-| IT | 58% | 14% | 17% | 11% | Headcount del área / Headcount total |
-| Administración | 58% | 14% | 17% | 11% | Headcount del área / Headcount total |
-| MKTG | 16% | 59% | 12% | 14% | 75% área comercial + 25% headcount |
-| Performance | 8% | 57% | 16% | 19% | 75% equipo comercial + 25% desarrollos del área |
-| General | — | — | — | — | **Sin fila propia**, default headcount (58/14/17/11) |
+Cada área de staff (Back Office, RRHH, IT, Administración, MKTG, Performance)
+tiene su propia fila en la Matriz de gastos con el % de reparto hacia las 4
+áreas de negocio — algunas por headcount, otras por operaciones/comitentes/
+facturación (ver el Detalle de cada fila en la hoja). "General" no tiene fila
+propia: usar el default de headcount como supuesto y flaggearlo.
 
-Fuente de los % de headcount (36 empleados en las 4 áreas de negocio): Mesa 21,
-FAs+Mza 5, Banca Corporativa 6, Banca Privada 4 → 21/36=58%, 5/36=14%,
-6/36=17%, 4/36=11%. Comitentes activos (para las filas "Comitentes del
-área/Comitentes totales"): Mesa 22, FAs+Mza 1.205, Banca Corporativa 159, Banca
-Privada 235 → 1%/74%/10%/14%. Facturación promedio Ene-Jul (para filas de
-Impuestos): Mesa 60%, FAs 34%, BC 4%, BP 2%. **Estos números vienen de la hoja
-"CÁLCULOS AUX" al pie de la Matriz de gastos — si el usuario manda una Matriz
-nueva, recalcular estos % de ahí, no asumir que siguen iguales.**
-
-⚠️ Estos son los valores del snapshot de `matriz.py` (`SNAPSHOT_DATE`), no un
-dato en vivo — ver §2.2.
+**Los valores puntuales viven solo en `matriz.py` (`PRIMERA_MATRIZ`), no acá.**
+Los números concretos no se repiten en este manual a propósito — son un
+snapshot (§2.2) y escribirlos en un documento pensado para durar los deja
+leerse como un hecho fijo. Para saber el % vigente de cada área, abrir
+`matriz.py` y confirmar la fecha de `SNAPSHOT_DATE` antes de usarlo.
 
 ## 5. Cuentas NO erogables — excluir siempre
 
