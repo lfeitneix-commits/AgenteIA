@@ -9,7 +9,9 @@ asignación, los gaps conocidos, y las reglas para cada cuenta. Este README es
 solo un índice de archivos.
 
 - `roster.py` — empleados por área + matching de nombres (tolera apodos/nombres truncados).
-- `matriz.py` — % reales de la Matriz de gastos.
+- `matriz.py` — % de respaldo de la Matriz de gastos (snapshot hardcodeado, solo se usa si no existe `matriz_gastos.csv`).
+- `matriz_gastos.csv` — **no versionado a mano**, lo sube solo el Apps Script de Google Sheets (`sync_matriz_to_github.gs`, entregado por chat) cada vez que se edita la Matriz. Si existe, tiene prioridad sobre `matriz.py`.
+- `load_matriz_csv.py` — parsea `matriz_gastos.csv` cuando existe.
 - `rrhh_sueldos.py` — Sueldos y CS por área y mes (RRHH).
 - `allocation_final.py` — motor principal. Lee `quant_accounting.json` (no
   versionado — son datos reales de sueldos/proveedores, se genera aparte

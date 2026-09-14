@@ -72,15 +72,25 @@ tenemos cargada".
 **No se puede leer en vivo desde este entorno.** Se probó fetch directo (curl) y con la tool de
 fetch web — las dos veces bloqueado por la política de red de la
 organización (`EGRESS_BLOCKED` a `docs.google.com`). No es un límite de
-permisos que se pueda resolver desde acá. Opciones reales:
-1. El usuario pega el CSV actualizado en el chat cuando haga falta (lo que se
-   viene haciendo).
-2. El usuario sube/actualiza un archivo `centro-costos/matriz_gastos.csv` en
-   el repo (a mano, o con algo automático de su lado tipo Apps Script + API de
-   GitHub) — si ese archivo existe, usarlo en vez de `matriz.py` y avisar con
-   qué fecha de commit se está trabajando.
+permisos que se pueda resolver desde acá.
 
-Snapshot actual (última vez que el usuario lo pasó): `matriz.py`, con
+**Solución implementada:** el usuario tiene un script de Google Apps Script
+(`sync_matriz_to_github.gs`, entregado por chat, no vive en este repo porque
+corre del lado de Google Sheets) que sincroniza la pestaña "Matriz de gastos"
+a `centro-costos/matriz_gastos.csv` en este repo cada vez que edita la hoja.
+`allocation_final.py` (vía `load_matriz_csv.py`) **prefiere siempre ese
+archivo si existe** — solo cae al snapshot hardcodeado de `matriz.py` si
+`matriz_gastos.csv` todavía no existe en el repo. El script imprime cuál de
+los dos usó en cada corrida.
+
+Aun así, **`matriz_gastos.csv` sigue siendo un archivo del repo, no la hoja en
+vivo** — se actualiza recién cuando el usuario edita el Sheet Y el Apps
+Script corre. Si pasó mucho tiempo sin commits nuevos en ese archivo, o el
+usuario dice que cambió algo y el archivo no refleja eso, sospechar que el
+Apps Script no está andando y confirmar con el usuario en vez de asumir que
+está al día.
+
+Snapshot de respaldo (si `matriz_gastos.csv` no existe): `matriz.py`, con
 `SNAPSHOT_DATE` al principio del archivo. **Tratarlo como desactualizado por
 default** — confirmar con el usuario antes de usarlo para algo real.
 
@@ -233,10 +243,9 @@ aplicados (con el monto de cada uno) para poder auditar cualquier número.
 - [ ] Definir Honorarios x Serv Diversos, Artículos de Limpieza, Telefonia
       Movil (§8).
 - [ ] Confirmar el criterio de "General" en la primera matriz (§4).
-- [ ] Preguntarle al usuario si quiere armar alguna forma de sincronizar
-      `matriz_gastos.csv` al repo automáticamente (Apps Script + API de
-      GitHub, o similar) para no depender de pegar el CSV a mano cada vez —
-      ver §2.2.
+- [ ] Confirmar que el usuario instaló y activó `sync_matriz_to_github.gs` en
+      el Google Sheet — mientras no esté instalado, `matriz_gastos.csv` no va
+      a existir y el motor sigue usando el snapshot de `matriz.py` (ver §2.2).
 
 Actualizar este checklist a medida que se resuelva o aparezca algo nuevo — no
 dejarlo desactualizado.

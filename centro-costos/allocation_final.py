@@ -1,9 +1,27 @@
 # -*- coding: utf-8 -*-
 import json, unicodedata
 from collections import defaultdict
-from matriz import PRIMERA_MATRIZ, HEADCOUNT_DEFAULT, CUENTA_PCT
+from matriz import PRIMERA_MATRIZ as _PRIMERA_MATRIZ_SNAPSHOT, HEADCOUNT_DEFAULT as _HEADCOUNT_DEFAULT_SNAPSHOT, \
+    CUENTA_PCT as _CUENTA_PCT_SNAPSHOT, SNAPSHOT_DATE
 from roster import PERSON_INDEX
 from rrhh_sueldos import rrhh_pct_for_month
+import load_matriz_csv
+
+# Preferir SIEMPRE centro-costos/matriz_gastos.csv si existe (lo sincroniza
+# el Apps Script de la Matriz, o lo sube el usuario a mano) -- solo cae al
+# snapshot hardcodeado de matriz.py si ese archivo todavía no existe.
+_csv_primera_matriz, _csv_cuenta_pct = load_matriz_csv.load()
+if _csv_primera_matriz is not None:
+    PRIMERA_MATRIZ = _csv_primera_matriz
+    CUENTA_PCT = _csv_cuenta_pct
+    HEADCOUNT_DEFAULT = (PRIMERA_MATRIZ.get('RRHH') or PRIMERA_MATRIZ.get('IT')
+                          or PRIMERA_MATRIZ.get('Administración') or _HEADCOUNT_DEFAULT_SNAPSHOT)
+    print(f'[matriz] Usando {load_matriz_csv.CSV_PATH} (sincronizado desde la Matriz de gastos)')
+else:
+    PRIMERA_MATRIZ = _PRIMERA_MATRIZ_SNAPSHOT
+    CUENTA_PCT = _CUENTA_PCT_SNAPSHOT
+    HEADCOUNT_DEFAULT = _HEADCOUNT_DEFAULT_SNAPSHOT
+    print(f'[matriz] matriz_gastos.csv no existe todavía -- usando el snapshot de matriz.py (SNAPSHOT_DATE={SNAPSHOT_DATE})')
 
 d = json.load(open('quant_accounting.json'))
 AREAS = ['Mesa', 'FAs', 'Banca Corporativa', 'Banca Privada']
