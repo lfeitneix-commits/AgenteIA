@@ -16,6 +16,10 @@
 # "¿la Matriz sigue igual a la del {SNAPSHOT_DATE}, o cambió algo?" y, si
 # cambió, pedirle el CSV actualizado y volver a generar este archivo antes de
 # calcular nada.
+#
+# FUENTE (pestaña "Matriz de gastos" del Sheet "Resultados por área 2026",
+# mismo gid que MATRIZ_GID en el index.html de dashboard-rentabilidad):
+# https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?output=csv&gid=44234235
 # ============================================================================
 SNAPSHOT_DATE = '2026-09'  # mes en que el usuario pasó este CSV por última vez
 

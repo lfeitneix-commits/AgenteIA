@@ -59,7 +59,17 @@ Corporativa, Banca Privada) + TOTAL + Detalle (explica el criterio). Es la
 fuente de verdad para todo lo que no viene ya separado por área en la cuenta
 contable.
 
-**No se puede leer en vivo.** Se probó fetch directo (curl) y con la tool de
+**URL exacta de la pestaña** (mismo `BASE` + gid que usa `dashboard-rentabilidad`
+en su `index.html`, pestaña "Matriz de gastos" del Google Sheet "Resultados por
+área 2026"):
+```
+https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4gdsYZTOZlI1jllNuQ2mBWBjabHVL5vJ9dPGVso5lnUVOOuRsQ_xhKVfa0XYDlKpPGr61FUnO3kvy/pub?output=csv&gid=44234235
+```
+Esta es LA fuente — siempre que se pueda, leer de acá (o de un archivo que se
+haya generado a partir de acá), nunca de una copia vieja porque "ya la
+tenemos cargada".
+
+**No se puede leer en vivo desde este entorno.** Se probó fetch directo (curl) y con la tool de
 fetch web — las dos veces bloqueado por la política de red de la
 organización (`EGRESS_BLOCKED` a `docs.google.com`). No es un límite de
 permisos que se pueda resolver desde acá. Opciones reales:
