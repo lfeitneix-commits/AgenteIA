@@ -12,6 +12,18 @@ directorio** (`roster.py`, `matriz.py`, `rrhh_sueldos.py`) con el dato nuevo,
 re-correr `allocation_final.py`, y actualizar este `MANUAL.md` si el dato nuevo
 cambia algún criterio (no solo un número).
 
+> ⚠️ **Los % de la Matriz, el roster y los sueldos NO son datos en vivo.**
+> Este entorno no tiene salida de red a Google Sheets (confirmado con curl y
+> con la tool de fetch web — bloqueado por política de red de la
+> organización), así que todo lo que está en `matriz.py`/`roster.py`/
+> `rrhh_sueldos.py` es una **foto de un momento dado** (ver `SNAPSHOT_DATE` en
+> cada archivo), no la fuente viva. **Antes de usar estos números para
+> cualquier cálculo que le importe al usuario de verdad (no una prueba),
+> preguntar explícitamente si siguen vigentes o si hay una versión más
+> nueva.** No asumir nunca que "como ya lo tengo cargado, ya está" — la Matriz
+> es una hoja que el usuario edita directamente y puede haber cambiado sin que
+> nadie me avise.
+
 ## 1. Objetivo
 
 Reproducir el proceso manual que el usuario hace en Excel: tomar los gastos
@@ -45,8 +57,22 @@ El mismo gid que ya usa `dashboard-rentabilidad` (`MATRIZ_GID` en su
 `index.html`). Una fila por cuenta, % por columna (Mesa, FAs+Mza, Banca
 Corporativa, Banca Privada) + TOTAL + Detalle (explica el criterio). Es la
 fuente de verdad para todo lo que no viene ya separado por área en la cuenta
-contable. **Este entorno no tiene salida de red a Google Sheets** — pedir el
-CSV exportado/subido a mano. Valores vigentes: `matriz.py`.
+contable.
+
+**No se puede leer en vivo.** Se probó fetch directo (curl) y con la tool de
+fetch web — las dos veces bloqueado por la política de red de la
+organización (`EGRESS_BLOCKED` a `docs.google.com`). No es un límite de
+permisos que se pueda resolver desde acá. Opciones reales:
+1. El usuario pega el CSV actualizado en el chat cuando haga falta (lo que se
+   viene haciendo).
+2. El usuario sube/actualiza un archivo `centro-costos/matriz_gastos.csv` en
+   el repo (a mano, o con algo automático de su lado tipo Apps Script + API de
+   GitHub) — si ese archivo existe, usarlo en vez de `matriz.py` y avisar con
+   qué fecha de commit se está trabajando.
+
+Snapshot actual (última vez que el usuario lo pasó): `matriz.py`, con
+`SNAPSHOT_DATE` al principio del archivo. **Tratarlo como desactualizado por
+default** — confirmar con el usuario antes de usarlo para algo real.
 
 ### 2.3 Roster de empleados + Sueldos y CS (RRHH)
 El roster (`roster.py`) mapea nombre de persona → área. Sirve para triagear
@@ -62,6 +88,12 @@ CS — porque en contabilidad las cuentas "Sueldos", "Cargas Sociales" y
 "Vacaciones" vienen **100% sin discriminar** (confirmado por el usuario: "no lo
 vamos a discriminar, va todo junto como un globo"). Se reparten aplicando el %
 real de RRHH mes a mes.
+
+⚠️ El roster y los sueldos también son snapshots (mismo problema de §2.2: sin
+acceso a la fuente viva). El roster puede quedar desactualizado por altas/
+bajas/cambios de área (ya pasó con Pedro Perez Marexiano — ver `roster.py`), y
+`rrhh_sueldos.py` solo tiene Enero-Junio. Confirmar con el usuario antes de
+asumir que están al día.
 
 ## 3. Reglas de asignación por cuenta
 
@@ -103,6 +135,9 @@ Privada 235 → 1%/74%/10%/14%. Facturación promedio Ene-Jul (para filas de
 Impuestos): Mesa 60%, FAs 34%, BC 4%, BP 2%. **Estos números vienen de la hoja
 "CÁLCULOS AUX" al pie de la Matriz de gastos — si el usuario manda una Matriz
 nueva, recalcular estos % de ahí, no asumir que siguen iguales.**
+
+⚠️ Estos son los valores del snapshot de `matriz.py` (`SNAPSHOT_DATE`), no un
+dato en vivo — ver §2.2.
 
 ## 5. Cuentas NO erogables — excluir siempre
 
@@ -173,6 +208,10 @@ con datos nuevos y el total se dispara sin explicación, algo cambió en las
 fuentes (Matriz, roster, o el export) que hay que revisar antes de confiar en
 el resultado nuevo.
 
+Calculado con los snapshots de Matriz/roster/RRHH vigentes en ese momento
+(§2.2, §2.3) — no lo presentes como el número "actual" sin antes confirmar que
+esos snapshots siguen valiendo.
+
 ## 11. Cómo correr esto
 
 ```
@@ -194,6 +233,10 @@ aplicados (con el monto de cada uno) para poder auditar cualquier número.
 - [ ] Definir Honorarios x Serv Diversos, Artículos de Limpieza, Telefonia
       Movil (§8).
 - [ ] Confirmar el criterio de "General" en la primera matriz (§4).
+- [ ] Preguntarle al usuario si quiere armar alguna forma de sincronizar
+      `matriz_gastos.csv` al repo automáticamente (Apps Script + API de
+      GitHub, o similar) para no depender de pegar el CSV a mano cada vez —
+      ver §2.2.
 
 Actualizar este checklist a medida que se resuelva o aparezca algo nuevo — no
 dejarlo desactualizado.

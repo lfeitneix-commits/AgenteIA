@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# ⚠️  FOTO DE UN MOMENTO DADO (snapshot 2026-09), no el roster "en vivo" de
+# RRHH. La gente entra, sale y cambia de área -> antes de un cálculo que
+# importe de verdad, confirmar con el usuario si esto sigue vigente.
+SNAPSHOT_DATE = '2026-09'
+# Nota: Pedro Perez Marexiano figura acá en Middle Office porque esa fue su
+# área durante Ene-Ago 2026 (el período ya calculado); en la realidad actual
+# pasó a Mesa. Si se recalcula un período posterior a su cambio de área, hay
+# que moverlo a Mesa en este diccionario.
 ROSTER = {
 'Operaciones': ['Silvia Olid','Yessica Ramos','Nadia Bernal','Sebastián Fernandez Molas','Cecilia Berardi',
     'Roberto Guerrierri','Maximo Casero','Tomas Troncar','Lucas Aristi','Lucas de Abelleyra',

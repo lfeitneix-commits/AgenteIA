@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
-# % reales de la Matriz de gastos (CSV subido). Claves = nombre exacto de cuenta.
-# Valores = (Mesa, FAs+Mza, Banca Corporativa, Banca Privada) en fracción (no %).
+# ============================================================================
+# ⚠️  FOTO DE UN MOMENTO DADO, NO LA MATRIZ "EN VIVO".
+#
+# Estos % son los que traía el CSV de la Matriz de gastos que el usuario pasó
+# por chat. Este entorno NO tiene salida de red a Google Sheets (confirmado
+# con curl y con la tool de fetch web: EGRESS_BLOCKED a docs.google.com), así
+# que no hay forma de refrescarlos solo. La Matriz de gastos es una hoja que
+# el usuario edita directamente -> estos números pueden estar desactualizados
+# en cualquier momento futuro.
+#
+# SNAPSHOT_DATE = última vez que se confirmaron estos valores.
+#
+# Regla obligatoria antes de usar esto para un cálculo que importe de verdad
+# (no solo una prueba): NO asumir que siguen vigentes. Preguntarle al usuario
+# "¿la Matriz sigue igual a la del {SNAPSHOT_DATE}, o cambió algo?" y, si
+# cambió, pedirle el CSV actualizado y volver a generar este archivo antes de
+# calcular nada.
+# ============================================================================
+SNAPSHOT_DATE = '2026-09'  # mes en que el usuario pasó este CSV por última vez
+
+# Claves = nombre exacto de cuenta. Valores = (Mesa, FAs+Mza, Banca
+# Corporativa, Banca Privada) en fracción (no %).
 
 def pct(m, f, bc, bp):
     return {'Mesa': m/100, 'FAs': f/100, 'Banca Corporativa': bc/100, 'Banca Privada': bp/100}

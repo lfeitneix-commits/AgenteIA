@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# ⚠️  Dato real de RRHH pero incompleto: solo Enero-Junio. Julio/Agosto usan
+# el promedio de estos 6 meses como supuesto (ver rrhh_pct_for_month) hasta
+# que RRHH pase esos meses -- reemplazar apenas estén.
 # Totales mensuales por área interna, tal como los pasó RRHH (columna TOTAL de cada bloque).
 # Mes: 1=Enero .. 6=Junio (el CSV no trae Jul/Ago todavía).
 RRHH_TOTAL = {
