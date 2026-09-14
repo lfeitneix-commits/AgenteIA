@@ -16,6 +16,10 @@ solo un índice de archivos.
 - `allocation_final.py` — motor principal. Lee `quant_accounting.json` (no
   versionado — son datos reales de sueldos/proveedores, se genera aparte
   parseando el export de contabilidad) y calcula el gasto final por área.
+- `quant_inversion.py` — **aparte del motor de asignación** (no se reparte
+  por área). Datos del informe de IT sobre la inversión en hardware/servicios
+  de Quant (Ene-Ago 2026) — se actualiza reemplazando el archivo entero cada
+  vez que IT pasa un informe nuevo, no hay fuente en vivo para esto.
 
 No se versiona ningún archivo con datos de proveedores/sueldos en el detalle
 transaccional (`quant_accounting.json`) — solo los criterios y los totales

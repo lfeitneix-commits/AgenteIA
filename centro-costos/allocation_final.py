@@ -105,6 +105,14 @@ MESA_NETO = {'Gastos Caja de Valores', 'Gastos A3 Mercados', 'Gastos Byma', 'Gas
              'Gastos Caja de Valores Exento', 'Gastos Byma Op. fuera Horario',
              'Gtos Alq Comitentes', 'Intereses Pagados'}
 
+# "Honorarios x Serv Diversos" es, en la práctica, el detalle transaccional real
+# de "Comisiones Productores" del manual (pagos de comisiones a productores/
+# agentes externos, uno por uno) -- confirmado por el usuario. Va 100% FAs
+# igual que Comisiones Productores, sin excepción -- incluidos los pagos a
+# Marina Muller que aparecen ahí adentro (su fila especial de la Matriz,
+# "Serv Contratados BC (Marina Muller)", es para OTRA cuenta, no para esta).
+FAS_NETO = {'Honorarios x Serv Diversos'}
+
 DIRECT_SECTOR = {'Mesa': 'Mesa', 'Banca Corporativa': 'Banca Corporativa', 'Banca Privada': 'Banca Privada',
                   'Productores': 'FAs', 'Oficina Mendoza': 'FAs'}
 
@@ -136,6 +144,10 @@ for code, acc in d.items():
 
     if n in MESA_NETO:
         add('Mesa', tot)
+        continue
+
+    if n in FAS_NETO:
+        add('FAs', tot)
         continue
 
     if n in ('Sueldos', 'Cargas Sociales', 'Vacaciones'):

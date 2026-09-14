@@ -157,13 +157,21 @@ Redondeo**. Son ajustes contables/valuación, no salida de caja real (`e` ≠
 "Erogable" en el JSON). También **"Impuesto a las ganancias"** — aunque viene
 marcada "Erogable", el usuario confirmó que es una provisión y se excluye.
 
-## 6. Cuentas 100% Mesa, netas de facturación
+## 6. Cuentas 100% a un área, sin reparto por %
 
-`Gastos Caja de Valores`, `Gastos A3 Mercados`, `Gastos Byma`, `Gastos Mae`,
-`Gastos Caja de Valores Exento`, `Gastos Byma Op. fuera Horario`, `Gtos Alq
-Comitentes`, `Intereses Pagados`. Ya vienen descontadas de la facturación de la
-mesa (nota "Valor de este mes: x… ya descontado de la facturación de la
-mesa").
+**100% Mesa** (netas de facturación): `Gastos Caja de Valores`, `Gastos A3
+Mercados`, `Gastos Byma`, `Gastos Mae`, `Gastos Caja de Valores Exento`,
+`Gastos Byma Op. fuera Horario`, `Gtos Alq Comitentes`, `Intereses Pagados`.
+Ya vienen descontadas de la facturación de la mesa (nota "Valor de este mes:
+x… ya descontado de la facturación de la mesa").
+
+**100% FAs**: `Honorarios x Serv Diversos` — confirmado por el usuario que es,
+en la práctica, el detalle transaccional real de "Comisiones Productores"
+(pagos de comisiones a productores/agentes externos, uno por uno: ~507 pagos
+a 51 personas/proveedores distintos en Ene-Ago 2026, ~$453M). Va 100% FAs
+**sin excepción**, incluidos los pagos a Marina Muller que aparecen adentro —
+su fila especial en la Matriz ("Serv Contratados BC (Marina Muller)", 20%
+FAs/10% BC/70% BP) es para otra cuenta, confirmado que acá no aplica.
 
 ## 7. Triage de las cuentas catch-all "*Neix"
 
@@ -180,11 +188,11 @@ mesa").
 
 ## 8. Gaps reales (sin regla en ningún lado, a confirmar con el usuario)
 
-- **Honorarios x Serv Diversos** — la cuenta más grande sin resolver (~$453M
-  en Ene-Ago 2026). Preguntar antes de asumir nada.
 - **Artículos de Limpieza** (~$2,4M).
 - **Telefonia Movil** (~$1,8M) — distinta de "Telefonia e Internet", que sí
   tiene regla.
+
+("Honorarios x Serv Diversos", que era el gap más grande, se resolvió — ver §6.)
 
 ## 9. Bug de matching a evitar — nombres que no coinciden por texto exacto
 
@@ -206,13 +214,13 @@ alias explícito (ver `ALIAS_CUENTA` en `allocation_final.py`):
 
 | Área | Monto | % |
 |---|---|---|
-| Mesa | $7.054,5M | 58,6% |
-| FAs + Mza | $3.530,9M | 29,3% |
-| Banca Corporativa | $850,0M | 7,1% |
-| Banca Privada | $601,6M | 5,0% |
-| **Total** | **$12.037,1M** | 100% |
+| Mesa | $7.054,5M | 56,5% |
+| FAs + Mza | $3.983,9M | 31,9% |
+| Banca Corporativa | $850,0M | 6,8% |
+| Banca Privada | $601,6M | 4,8% |
+| **Total** | **$12.490,0M** | 100% |
 
-(No incluye los ~$457M de gaps del §8 ni las cuentas no erogables del §5.)
+(No incluye los ~$4,2M de gaps del §8 ni las cuentas no erogables del §5.)
 Sirve como número de referencia — si se vuelve a correr `allocation_final.py`
 con datos nuevos y el total se dispara sin explicación, algo cambió en las
 fuentes (Matriz, roster, o el export) que hay que revisar antes de confiar en
@@ -240,8 +248,7 @@ aplicados (con el monto de cada uno) para poder auditar cualquier número.
 - [ ] Operaciones por área de Julio/Agosto (el usuario avisó que las va a
       mandar) — para afinar el % de Back Office / Gastos Corresp. Ext. u$s
       (hoy 60/30/5/5, un valor fijo de la Matriz).
-- [ ] Definir Honorarios x Serv Diversos, Artículos de Limpieza, Telefonia
-      Movil (§8).
+- [ ] Definir Artículos de Limpieza y Telefonia Movil (§8).
 - [ ] Confirmar el criterio de "General" en la primera matriz (§4).
 - [ ] Confirmar que el usuario instaló y activó `sync_matriz_to_github.gs` en
       el Google Sheet — mientras no esté instalado, `matriz_gastos.csv` no va
